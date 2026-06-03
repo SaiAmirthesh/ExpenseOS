@@ -4,6 +4,9 @@ import com.ExpenseOS.Backend.dto.auth.AuthResponse;
 import com.ExpenseOS.Backend.dto.auth.LoginRequest;
 import com.ExpenseOS.Backend.dto.auth.RegisterRequest;
 import com.ExpenseOS.Backend.entity.User;
+import com.ExpenseOS.Backend.exception.InvalidCredentialsException;
+import com.ExpenseOS.Backend.exception.ResourceNotFoundException;
+import com.ExpenseOS.Backend.exception.UserAlreadyExistsException;
 import com.ExpenseOS.Backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,7 +22,7 @@ public class AuthService {
 
     public String register(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already exists");
+            throw new UserAlreadyExistsException("Email already exists");
         }
 
         User user = User.builder()
@@ -35,11 +38,11 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user  = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(()->new RuntimeException("User Not Found"));
+                .orElseThrow(()->new ResourceNotFoundException("User Not Found"));
 
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if(!matches){
-            throw new RuntimeException("invalid Credentials");
+            throw new InvalidCredentialsException("invalid Credentials");
         }
         String token =
                 jwtService.generateToken(user.getEmail());
