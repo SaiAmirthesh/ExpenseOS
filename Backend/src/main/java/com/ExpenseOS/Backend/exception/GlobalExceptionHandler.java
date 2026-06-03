@@ -3,17 +3,18 @@ package com.ExpenseOS.Backend.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUserExists(
             UserAlreadyExistsException ex
     ) {
-
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(
                         ErrorResponse.builder()
@@ -28,7 +29,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException ex
     ) {
-
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(
                         ErrorResponse.builder()
@@ -43,7 +43,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(
             ResourceNotFoundException ex
     ) {
-
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(
                         ErrorResponse.builder()
@@ -58,7 +57,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleForbidden(
             ForbiddenOperationException ex
     ) {
-
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(
                         ErrorResponse.builder()
@@ -69,11 +67,24 @@ public class GlobalExceptionHandler {
                 );
     }
 
+    @ExceptionHandler(InvalidOperationException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOperation(
+            InvalidOperationException ex
+    ) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(
+                        ErrorResponse.builder()
+                                .status(400)
+                                .message(ex.getMessage())
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex
     ) {
-
         String message =
                 ex.getBindingResult()
                         .getFieldError()
@@ -93,7 +104,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneral(
             Exception ex
     ) {
-
         return ResponseEntity.internalServerError()
                 .body(
                         ErrorResponse.builder()

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "settlements")
@@ -28,4 +29,16 @@ public class Settlement extends BaseEntity {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private SettlementStatus status = SettlementStatus.PENDING;
+
+    private String note;
+
+    @Column(nullable = false)
+    private LocalDateTime settledAt;
+
+    private LocalDateTime approvedAt;
 }

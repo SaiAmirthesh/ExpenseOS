@@ -8,6 +8,7 @@ import com.ExpenseOS.Backend.entity.Group;
 import com.ExpenseOS.Backend.entity.GroupMember;
 import com.ExpenseOS.Backend.entity.User;
 import com.ExpenseOS.Backend.exception.ForbiddenOperationException;
+import com.ExpenseOS.Backend.exception.InvalidOperationException;
 import com.ExpenseOS.Backend.exception.ResourceNotFoundException;
 import com.ExpenseOS.Backend.repository.GroupMemberRepository;
 import com.ExpenseOS.Backend.repository.GroupRepository;
@@ -87,7 +88,7 @@ public class GroupService {
         assertActiveGroupOwner(group, currentUserEmail);
         User user = getUserByEmail(request.getEmail());
         if(groupMemberRepository.existsByGroupAndUser(group,user)){
-            throw new RuntimeException("User Already Exists in the Group");
+            throw new InvalidOperationException("User already exists in the group");
         }
         GroupMember member = GroupMember.builder().group(group).user(user).build();
         groupMemberRepository.save(member);
