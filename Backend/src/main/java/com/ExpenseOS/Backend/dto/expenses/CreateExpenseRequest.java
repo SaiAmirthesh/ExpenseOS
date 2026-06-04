@@ -1,6 +1,8 @@
 package com.ExpenseOS.Backend.dto.expenses;
 
 import com.ExpenseOS.Backend.entity.ExpenseCategory;
+import com.ExpenseOS.Backend.entity.SplitType;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -8,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +30,9 @@ public class CreateExpenseRequest {
 
     @NotNull(message = "Category is required")
     private ExpenseCategory category;
+
+    private SplitType splitType;
+
+    @Valid
+    private List<SplitRequest> splits;
 }
