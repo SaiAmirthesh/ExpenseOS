@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "personal_expenses")
@@ -24,7 +25,10 @@ public class PersonalExpense extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ExpenseCategory category;
+    private PersonalExpenseCategory category;
+
+    @Column(nullable = false)
+    private LocalDate expenseDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
