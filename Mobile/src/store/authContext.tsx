@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storage, StorageKeys, setStorageItem, removeStorageItem } from './storage';
+import { queryClient } from '../services/queryClient';
 
 interface User {
   id: string | null;
@@ -60,6 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setUser({ id: null, name: null, email: null });
     setIsAuthenticated(false);
+    
+    // Clear React Query cache to prevent data leak across logins
+    queryClient.clear();
   };
 
   return (

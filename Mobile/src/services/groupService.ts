@@ -55,4 +55,8 @@ export const groupService = {
   removeMember: async (groupId: number, userId: number): Promise<void> => {
     await apiClient.delete(`/groups/${groupId}/members/${userId}`);
   },
+
+  leaveGroup: async (groupId: number): Promise<void> => {
+    await apiClient.delete(`/groups/${groupId}/members/me`);
+  },
 };

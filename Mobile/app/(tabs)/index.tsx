@@ -11,7 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LogOut, Users, Plus, ArrowUpRight, ArrowDownLeft, Wallet, Bell } from 'lucide-react-native';
+import { LogOut, Users, ArrowUpRight, ArrowDownLeft, Wallet, Bell } from 'lucide-react-native';
 
 import { useAuth } from '../../src/store/authContext';
 import { Colors } from '../../src/theme/theme';
@@ -19,13 +19,13 @@ import { groupService } from '../../src/services/groupService';
 import { balanceService } from '../../src/services/balanceService';
 import { invitationService } from '../../src/services/invitationService';
 import { personalExpenseService } from '../../src/services/personalExpenseService';
+import { settlementService } from '../../src/services/settlementService';
 import { Card } from '../../src/components/common/Card';
 import { Skeleton } from '../../src/components/common/Skeleton';
 
 // Cast icons to avoid React 19 typing issues
 const LogOutIcon = LogOut as any;
 const UsersIcon = Users as any;
-const PlusIcon = Plus as any;
 const ArrowUpRightIcon = ArrowUpRight as any;
 const ArrowDownLeftIcon = ArrowDownLeft as any;
 const WalletIcon = Wallet as any;
@@ -63,6 +63,15 @@ export default function DashboardScreen() {
   } = useQuery({
     queryKey: ['pendingInvitations'],
     queryFn: invitationService.getPendingInvitations,
+  });
+
+  const {
+    data: pendingSettlements = [],
+    isLoading: loadingSettlements,
+    refetch: refetchSettlements
+  } = useQuery({
+    queryKey: ['pendingSettlements'],
+    queryFn: settlementService.getPendingSettlements,
   });
 
   // Dynamically fetch balances for all groups to aggregate Owe / Owed totals
@@ -116,6 +125,7 @@ export default function DashboardScreen() {
       refetchPersonal(),
       refetchGroups(),
       refetchInvitations(),
+      refetchSettlements(),
       refetchBalances(),
     ]);
     setRefreshing(false);
@@ -126,7 +136,8 @@ export default function DashboardScreen() {
     return personalExpenses.reduce((sum, item) => sum + item.amount, 0);
   }, [personalExpenses]);
 
-  const isLoadingAny = loadingPersonal || loadingGroups || loadingInvitations || (groups.length > 0 && loadingBalances);
+  const totalNotifications = pendingInvitations.length + pendingSettlements.length;
+  const isLoadingAny = loadingPersonal || loadingGroups || loadingInvitations || loadingSettlements || (groups.length > 0 && loadingBalances);
 
   return (
     <View style={[styles.safeArea, { paddingTop: Math.max(insets.top, 16) }]}>
@@ -147,16 +158,18 @@ export default function DashboardScreen() {
             <Text style={styles.userName}>{user.name || 'Premium User'}</Text>
           </View>
           <View style={styles.headerActions}>
-            {pendingInvitations.length > 0 && (
-              <TouchableOpacity
-                style={styles.bellButton}
-                onPress={() => router.push('/modal')} // Placeholder mapping to invitation view
-                activeOpacity={0.7}
-              >
-                <BellIcon size={20} color={Colors.secondary} />
-                <View style={styles.notificationDot} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={styles.bellButton}
+              onPress={() => router.push('/notifications')}
+              activeOpacity={0.7}
+            >
+              <BellIcon size={20} color={totalNotifications > 0 ? Colors.secondary : Colors.muted} />
+              {totalNotifications > 0 && (
+                <View style={styles.notificationDot}>
+                  <Text style={styles.dotText}>{totalNotifications}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.logoutButton}
               onPress={logout}
@@ -167,15 +180,15 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Pending Invitations Alert */}
-        {pendingInvitations.length > 0 && (
+        {/* Pending Invitations/Notifications Alert */}
+        {totalNotifications > 0 && (
           <TouchableOpacity
             style={styles.invitationBanner}
-            onPress={() => router.push('/modal')}
+            onPress={() => router.push('/notifications')}
             activeOpacity={0.9}
           >
             <Text style={styles.invitationText}>
-              You have {pendingInvitations.length} pending group invitation{pendingInvitations.length > 1 ? 's' : ''}!
+              You have {totalNotifications} new notification{totalNotifications > 1 ? 's' : ''}!
             </Text>
           </TouchableOpacity>
         )}
@@ -193,14 +206,20 @@ export default function DashboardScreen() {
         ) : (
           <View style={styles.bentoGrid}>
             {/* Main Personal Spend Card */}
-            <Card style={[styles.bentoFull, styles.mainCard]}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardLabel}>Personal Spending</Text>
-                <WalletIcon size={18} color={Colors.primary} />
-              </View>
-              <Text style={styles.cardValue}>₹{totalPersonalSpend.toLocaleString()}</Text>
-              <Text style={styles.cardSubtext}>Total tracked individual expenses</Text>
-            </Card>
+            <TouchableOpacity
+              style={styles.bentoFull}
+              onPress={() => router.push('/personal-expenses')}
+              activeOpacity={0.8}
+            >
+              <Card style={[styles.mainCard, styles.bentoFull]}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardLabel}>Personal Spending</Text>
+                  <WalletIcon size={18} color={Colors.primary} />
+                </View>
+                <Text style={styles.cardValue}>₹{totalPersonalSpend.toLocaleString()}</Text>
+                <Text style={styles.cardSubtext}>Tap to manage individual expenses</Text>
+              </Card>
+            </TouchableOpacity>
 
             {/* Owed to You Card */}
             <Card style={[styles.bentoHalf, styles.owedCard]}>
@@ -241,13 +260,13 @@ export default function DashboardScreen() {
         <View style={styles.actionsContainer}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/explore')} // Redirects to explorer
+            onPress={() => router.push('/personal-expenses/create')}
             activeOpacity={0.7}
           >
             <View style={styles.actionIconContainer}>
-              <PlusIcon size={24} color={Colors.primary} />
+              <WalletIcon size={24} color={Colors.primary} />
             </View>
-            <Text style={styles.actionText}>Add Expense</Text>
+            <Text style={styles.actionText}>Log Expense</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -280,6 +299,7 @@ export default function DashboardScreen() {
             <TouchableOpacity
               key={group.id}
               style={styles.groupItem}
+              onPress={() => router.push(`/groups/${group.id}`)}
               activeOpacity={0.7}
             >
               <View style={styles.groupAvatar}>
@@ -288,10 +308,10 @@ export default function DashboardScreen() {
               <View style={styles.groupInfo}>
                 <Text style={styles.groupNameText}>{group.name}</Text>
                 <Text style={styles.groupDescriptionText} numberOfLines={1}>
-                  {group.description || 'Shared Expense OS Group'}
+                  {group.description || 'Shared Expense Group'}
                 </Text>
               </View>
-              <ArrowUpRightIcon size={16} color={Colors.muted} />
+              <ArrowUpRightIcon size={16} color={Colors.primary} />
             </TouchableOpacity>
           ))
         )}
@@ -353,12 +373,20 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  dotText: {
+    color: '#000000',
+    fontSize: 9,
+    fontWeight: '900',
   },
   invitationBanner: {
     backgroundColor: 'rgba(0, 229, 255, 0.1)',

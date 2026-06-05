@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public interface GroupInvitationRepository extends JpaRepository<GroupInvitation, Long> {
 
+    void deleteByGroup(Group group);
+
     @EntityGraph(attributePaths = {"group", "invitedBy", "invitedUser"})
     List<GroupInvitation> findByInvitedByOrInvitedUserOrderByCreatedAtDesc(User invitedBy, User invitedUser);
 

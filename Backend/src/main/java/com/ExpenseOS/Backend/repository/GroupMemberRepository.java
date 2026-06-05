@@ -9,26 +9,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface GroupMemberRepository
-        extends JpaRepository<GroupMember, Long> {
+public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> {
 
     @EntityGraph(attributePaths = {"user"})
     List<GroupMember> findByGroup(Group group);
 
-    Optional<GroupMember> findByGroupAndUser(
-            Group group,
-            User user
-    );
+    @EntityGraph(attributePaths = {"group", "group.createdBy"})
+    List<GroupMember> findByUser(User user);
 
-    boolean existsByGroupAndUser(
-            Group group,
-            User user
-    );
+    Optional<GroupMember> findByGroupAndUser(Group group, User user);
 
-    void deleteByGroupAndUser(
-            Group group,
-            User user
-    );
+    boolean existsByGroupAndUser(Group group, User user);
+
+    void deleteByGroupAndUser(Group group, User user);
 
     void deleteByGroup(Group group);
 }

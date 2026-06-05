@@ -1,5 +1,6 @@
 package com.ExpenseOS.Backend.repository;
 
+import com.ExpenseOS.Backend.entity.Group;
 import com.ExpenseOS.Backend.entity.Settlement;
 import com.ExpenseOS.Backend.entity.SettlementStatus;
 import com.ExpenseOS.Backend.repository.projection.UserAmountProjection;
@@ -11,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
+
+    boolean existsByGroupIdAndStatus(Long groupId, SettlementStatus status);
+
+    void deleteByGroup(Group group);
 
     @EntityGraph(attributePaths = {"fromUser", "toUser", "group"})
     List<Settlement> findByGroupIdOrderByCreatedAtDesc(Long groupId);

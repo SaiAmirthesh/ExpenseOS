@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface ExpenseSplitRepository extends JpaRepository<ExpenseSplit, Long> {
 
+    void deleteByExpenseGroupId(Long groupId);
+
     @Query("""
             select s
             from ExpenseSplit s

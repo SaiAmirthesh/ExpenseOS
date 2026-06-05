@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { loginSchema, LoginFields } from '../../src/features/auth/schemas/authSchema';
 import { authService } from '../../src/services/authService';
 import { useAuth } from '../../src/store/authContext';
+import { userService } from '../../src/services/userService';
+import { setStorageItem, StorageKeys } from '../../src/store/storage';
 import { Colors } from '../../src/theme/theme';
 import { Button } from '../../src/components/common/Button';
 import { Input } from '../../src/components/common/Input';
@@ -38,10 +40,16 @@ export default function LoginScreen() {
     setServerError(null);
     try {
       const response = await authService.login(data);
+      
+      // Save token temporarily so subsequent profile request gets it injected
+      setStorageItem(StorageKeys.ACCESS_TOKEN, response.accessToken);
+      
+      const profile = await userService.getCurrentUser();
+      
       login(response.accessToken, response.refreshToken, {
-        id: '1', 
-        name: response.name,
-        email: response.email,
+        id: profile.id.toString(), 
+        name: profile.name,
+        email: profile.email,
       });
     } catch (error: any) {
       if (error.response && error.response.data) {
