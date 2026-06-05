@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView 
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'expo-router';
+
+import { loginSchema, LoginFields } from '../../src/features/auth/schemas/authSchema';
+import { authService } from '../../src/services/authService';
+import { useAuth } from '../../src/store/authContext';
+import { Colors } from '../../src/theme/theme';
+import { Button } from '../../src/components/common/Button';
+import { Input } from '../../src/components/common/Input';
+
+export default function LoginScreen() {
+  const router = useRouter();
+  const { login } = useAuth();
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginFields>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: LoginFields) => {
+    setIsLoading(true);
+    setServerError(null);
+    try {
+      const response = await authService.login(data);
+      login(response.accessToken, response.refreshToken, {
+        id: '1', 
+        name: response.name,
+        email: response.email,
+      });
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        setServerError(
+          typeof error.response.data === 'string'
+            ? error.response.data
+            : error.response.data.message || 'Login failed'
+        );
+      } else {
+        setServerError('Cannot connect to server. Check your network.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      style={styles.keyboardView}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <Text style={styles.logo}>Expense<Text style={styles.logoHighlight}>OS</Text></Text>
+          <Text style={styles.tagline}>Dark Luxury Expense Management</Text>
+        </View>
+
+        <View style={styles.formContainer}>
+          <Text style={styles.formTitle}>Welcome back</Text>
+          <Text style={styles.formSubtitle}>Sign in to your premium account</Text>
+
+          {serverError && (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{serverError}</Text>
+            </View>
+          )}
+
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Email Address"
+                placeholder="name@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                error={errors.email?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Password"
+                placeholder="••••••••"
+                secureTextEntry
+                autoCapitalize="none"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                error={errors.password?.message}
+              />
+            )}
+          />
+
+          <Button
+            title="Sign In"
+            onPress={handleSubmit(onSubmit)}
+            isLoading={isLoading}
+            style={styles.signInButton}
+          />
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.footerLink}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  logo: {
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -1,
+  },
+  logoHighlight: {
+    color: Colors.primary,
+  },
+  tagline: {
+    fontSize: 14,
+    color: Colors.muted,
+    marginTop: 8,
+    letterSpacing: 0.5,
+  },
+  formContainer: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 24,
+  },
+  formTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  formSubtitle: {
+    fontSize: 14,
+    color: Colors.muted,
+    marginBottom: 24,
+  },
+  errorBanner: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    borderWidth: 1,
+    borderColor: Colors.error,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+  },
+  errorBannerText: {
+    color: Colors.error,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  signInButton: {
+    marginTop: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  footerText: {
+    color: Colors.muted,
+    fontSize: 14,
+  },
+  footerLink: {
+    color: Colors.primary,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+});
