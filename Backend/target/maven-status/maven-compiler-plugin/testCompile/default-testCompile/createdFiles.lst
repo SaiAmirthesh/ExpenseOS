@@ -1,0 +1,10 @@
+com\ExpenseOS\Backend\service\BalanceServiceTest$1.class
+com\ExpenseOS\Backend\service\ExpenseServiceTest.class
+com\ExpenseOS\Backend\service\SettlementSuggestionServiceTest.class
+com\ExpenseOS\Backend\service\BalanceServiceTest.class
+com\ExpenseOS\Backend\service\SettlementServiceTest.class
+com\ExpenseOS\Backend\service\GroupInvitationServiceTest.class
+com\ExpenseOS\Backend\service\PersonalExpenseServiceTest.class
+com\ExpenseOS\Backend\service\AuthServiceTest.class
+com\ExpenseOS\Backend\service\PersonalExpenseAnalyticsServiceTest.class
+com\ExpenseOS\Backend\BackendApplicationTests.class
