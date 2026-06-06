@@ -18,27 +18,12 @@ public class JwtService {
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
-    @Value("${jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration;
-
     private SecretKey getSigningKey(){
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String email) {
-        return generateAccessToken(email, 0L);
-    }
-
     public String generateAccessToken(String email, Long tokenVersion) {
         return buildToken(email, tokenVersion, accessTokenExpiration);
-    }
-
-    public String generateRefreshToken(String email, Long tokenVersion) {
-        return buildToken(email, tokenVersion, refreshTokenExpiration);
-    }
-
-    public long getRefreshTokenExpiration() {
-        return refreshTokenExpiration;
     }
 
     private String buildToken(String email, Long tokenVersion, long expiration) {

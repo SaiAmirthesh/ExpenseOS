@@ -4,7 +4,6 @@ package com.ExpenseOS.Backend.controller;
 import com.ExpenseOS.Backend.dto.auth.AuthResponse;
 import com.ExpenseOS.Backend.dto.auth.ChangePasswordRequest;
 import com.ExpenseOS.Backend.dto.auth.LoginRequest;
-import com.ExpenseOS.Backend.dto.auth.RefreshTokenRequest;
 import com.ExpenseOS.Backend.dto.auth.RegisterRequest;
 import com.ExpenseOS.Backend.exception.ForbiddenOperationException;
 import com.ExpenseOS.Backend.service.AuthService;
@@ -36,13 +35,6 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ){
         return ResponseEntity.ok(authService.login(request));
-    }
-
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(
-            @Valid @RequestBody RefreshTokenRequest request
-    ) {
-        return ResponseEntity.ok(authService.refreshToken(request));
     }
 
     @PutMapping("/change-password")

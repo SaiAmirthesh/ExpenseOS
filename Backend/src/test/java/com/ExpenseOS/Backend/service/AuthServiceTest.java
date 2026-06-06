@@ -3,12 +3,10 @@ package com.ExpenseOS.Backend.service;
 import com.ExpenseOS.Backend.dto.auth.AuthResponse;
 import com.ExpenseOS.Backend.dto.auth.ChangePasswordRequest;
 import com.ExpenseOS.Backend.dto.auth.LoginRequest;
-import com.ExpenseOS.Backend.dto.auth.RefreshTokenRequest;
 import com.ExpenseOS.Backend.entity.User;
 import com.ExpenseOS.Backend.exception.InvalidCredentialsException;
 import com.ExpenseOS.Backend.exception.InvalidOperationException;
 import com.ExpenseOS.Backend.exception.ResourceNotFoundException;
-import com.ExpenseOS.Backend.repository.RefreshTokenRepository;
 import com.ExpenseOS.Backend.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,49 +27,23 @@ import static org.mockito.Mockito.when;
 class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
 
     @InjectMocks private AuthService authService;
 
     @Test
-    void loginReturnsAccessAndRefreshTokens() {
+    void loginReturnsAccessToken() {
         User user = user(1L, "Sai", "sai@example.com", "old-hash", 0L);
         LoginRequest request = loginRequest("sai@example.com", "old-pass");
 
         when(userRepository.findByEmail("sai@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("old-pass", "old-hash")).thenReturn(true);
         when(jwtService.generateAccessToken("sai@example.com", 0L)).thenReturn("access-token");
-        when(jwtService.generateRefreshToken("sai@example.com", 0L)).thenReturn("refresh-token");
-        when(jwtService.getRefreshTokenExpiration()).thenReturn(604800000L);
-        when(refreshTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         AuthResponse response = authService.login(request);
 
         assertEquals("access-token", response.getAccessToken());
-        assertEquals("refresh-token", response.getRefreshToken());
-        verify(refreshTokenRepository).deleteByUser(user);
-    }
-
-    @Test
-    void refreshTokenRotatesTokens() {
-        User user = user(1L, "Sai", "sai@example.com", "old-hash", 0L);
-        com.ExpenseOS.Backend.entity.RefreshToken storedToken = refreshToken(user, "old-refresh");
-        RefreshTokenRequest request = refreshRequest("old-refresh");
-
-        when(refreshTokenRepository.findByToken("old-refresh")).thenReturn(Optional.of(storedToken));
-        when(jwtService.generateAccessToken("sai@example.com", 0L)).thenReturn("new-access-token");
-        when(jwtService.generateRefreshToken("sai@example.com", 0L)).thenReturn("new-refresh-token");
-        when(jwtService.getRefreshTokenExpiration()).thenReturn(604800000L);
-        when(refreshTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        AuthResponse response = authService.refreshToken(request);
-
-        assertEquals("new-access-token", response.getAccessToken());
-        assertEquals("new-refresh-token", response.getRefreshToken());
-        verify(refreshTokenRepository).delete(storedToken);
-        verify(refreshTokenRepository).deleteByUser(user);
     }
 
     @Test
@@ -91,7 +63,6 @@ class AuthServiceTest {
         assertEquals("new-hash", user.getPassword());
         assertEquals(1L, user.getTokenVersion());
         verify(userRepository).save(user);
-        verify(refreshTokenRepository).deleteByUser(user);
     }
 
     @Test
@@ -142,12 +113,6 @@ class AuthServiceTest {
         return request;
     }
 
-    private static RefreshTokenRequest refreshRequest(String token) {
-        RefreshTokenRequest request = new RefreshTokenRequest();
-        request.setRefreshToken(token);
-        return request;
-    }
-
     private static ChangePasswordRequest request(String currentPassword, String newPassword, String confirmPassword) {
         ChangePasswordRequest request = new ChangePasswordRequest();
         request.setCurrentPassword(currentPassword);
@@ -166,15 +131,5 @@ class AuthServiceTest {
                 .build();
         user.setId(id);
         return user;
-    }
-
-    private static com.ExpenseOS.Backend.entity.RefreshToken refreshToken(User user, String token) {
-        com.ExpenseOS.Backend.entity.RefreshToken refreshToken = com.ExpenseOS.Backend.entity.RefreshToken.builder()
-                .token(token)
-                .user(user)
-                .expiryDate(java.time.LocalDateTime.now().plusDays(7))
-                .build();
-        refreshToken.setId(100L);
-        return refreshToken;
     }
 }
