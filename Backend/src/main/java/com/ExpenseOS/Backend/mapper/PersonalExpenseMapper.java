@@ -1,10 +1,15 @@
 package com.ExpenseOS.Backend.mapper;
 
 import com.ExpenseOS.Backend.dto.personalexpense.CreatePersonalExpenseRequest;
+import com.ExpenseOS.Backend.dto.personalexpense.CategorySpendingResponse;
+import com.ExpenseOS.Backend.dto.personalexpense.MonthlySpendingResponse;
 import com.ExpenseOS.Backend.dto.personalexpense.PersonalExpenseResponse;
 import com.ExpenseOS.Backend.dto.personalexpense.UpdatePersonalExpenseRequest;
 import com.ExpenseOS.Backend.entity.PersonalExpense;
+import com.ExpenseOS.Backend.entity.PersonalExpenseCategory;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 @Component
 public class PersonalExpenseMapper {
@@ -34,6 +39,20 @@ public class PersonalExpenseMapper {
                 .amount(expense.getAmount())
                 .category(expense.getCategory())
                 .expenseDate(expense.getExpenseDate())
+                .build();
+    }
+
+    public MonthlySpendingResponse toMonthlyResponse(String month, BigDecimal amount) {
+        return MonthlySpendingResponse.builder()
+                .month(month)
+                .amount(amount)
+                .build();
+    }
+
+    public CategorySpendingResponse toCategoryResponse(PersonalExpenseCategory category, BigDecimal amount) {
+        return CategorySpendingResponse.builder()
+                .category(category)
+                .amount(amount)
                 .build();
     }
 }

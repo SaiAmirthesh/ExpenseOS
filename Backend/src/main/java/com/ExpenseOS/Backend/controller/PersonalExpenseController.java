@@ -1,6 +1,8 @@
 package com.ExpenseOS.Backend.controller;
 
 import com.ExpenseOS.Backend.dto.personalexpense.CreatePersonalExpenseRequest;
+import com.ExpenseOS.Backend.dto.personalexpense.CategorySpendingResponse;
+import com.ExpenseOS.Backend.dto.personalexpense.MonthlySpendingResponse;
 import com.ExpenseOS.Backend.dto.personalexpense.PersonalExpenseResponse;
 import com.ExpenseOS.Backend.dto.personalexpense.UpdatePersonalExpenseRequest;
 import com.ExpenseOS.Backend.entity.PersonalExpenseCategory;
@@ -81,5 +83,21 @@ public class PersonalExpenseController {
             Authentication authentication
     ) {
         return personalExpenseService.getByDateRange(authentication.getName(), startDate, endDate);
+    }
+
+    @GetMapping("/analytics/monthly")
+    public List<MonthlySpendingResponse> getMonthlyAnalytics(
+            @RequestParam(required = false) Integer year,
+            Authentication authentication
+    ) {
+        return personalExpenseService.getMonthlySpendingAnalysis(authentication.getName(), year);
+    }
+
+    @GetMapping("/analytics/category")
+    public List<CategorySpendingResponse> getCategoryAnalytics(
+            @RequestParam(required = false) Integer year,
+            Authentication authentication
+    ) {
+        return personalExpenseService.getCategorySpendingAnalysis(authentication.getName(), year);
     }
 }

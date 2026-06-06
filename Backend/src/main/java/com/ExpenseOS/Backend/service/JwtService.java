@@ -18,16 +18,48 @@ public class JwtService {
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
+
     private SecretKey getSigningKey(){
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
-    public String generateToken(String email){
-        return Jwts.builder().subject(email).issuedAt(new Date()).expiration(new Date(System.currentTimeMillis()
-                + accessTokenExpiration)).signWith(getSigningKey()).compact();
+
+    public String generateToken(String email) {
+        return generateAccessToken(email, 0L);
     }
+
+    public String generateAccessToken(String email, Long tokenVersion) {
+        return buildToken(email, tokenVersion, accessTokenExpiration);
+    }
+
+    public String generateRefreshToken(String email, Long tokenVersion) {
+        return buildToken(email, tokenVersion, refreshTokenExpiration);
+    }
+
+    public long getRefreshTokenExpiration() {
+        return refreshTokenExpiration;
+    }
+
+    private String buildToken(String email, Long tokenVersion, long expiration) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("tokenVersion", tokenVersion == null ? 0L : tokenVersion)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     public String extractEmail(String token){
         return extractClaim(token, Claims::getSubject);
     }
+
+    public Long extractTokenVersion(String token) {
+        Number version = extractClaim(token, claims -> claims.get("tokenVersion", Number.class));
+        return version == null ? 0L : version.longValue();
+    }
+
     public <T> T extractClaim(
             String token,
             Function<Claims, T> resolver
@@ -42,8 +74,14 @@ public class JwtService {
         return resolver.apply(claims);
     }
 
-    public boolean isTokenValid(String token,String email){
-        return email.equals(extractEmail(token)) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, String email) {
+        return isTokenValid(token, email, 0L);
+    }
+
+    public boolean isTokenValid(String token, String email, Long tokenVersion){
+        return email.equals(extractEmail(token))
+                && extractTokenVersion(token).equals(tokenVersion == null ? 0L : tokenVersion)
+                && !isTokenExpired(token);
     }
 
     public boolean isTokenExpired(String token){

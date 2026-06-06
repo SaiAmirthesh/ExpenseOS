@@ -2,6 +2,8 @@ package com.ExpenseOS.Backend.security;
 
 import com.ExpenseOS.Backend.service.CustomUserDetailsService;
 import com.ExpenseOS.Backend.service.JwtService;
+import com.ExpenseOS.Backend.repository.UserRepository;
+import com.ExpenseOS.Backend.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
@@ -18,10 +20,11 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter
-        extends OncePerRequestFilter {
+    extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -44,12 +47,18 @@ public class JwtAuthenticationFilter
         String email  = jwtService.extractEmail(token);
 
         if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
             if(jwtService.isTokenValid(
                     token,
-                    userDetails.getUsername()
+                    userDetails.getUsername(),
+                    user.getTokenVersion()
             )){
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

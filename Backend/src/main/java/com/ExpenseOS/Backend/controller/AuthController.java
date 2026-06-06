@@ -2,15 +2,20 @@ package com.ExpenseOS.Backend.controller;
 
 
 import com.ExpenseOS.Backend.dto.auth.AuthResponse;
+import com.ExpenseOS.Backend.dto.auth.ChangePasswordRequest;
 import com.ExpenseOS.Backend.dto.auth.LoginRequest;
+import com.ExpenseOS.Backend.dto.auth.RefreshTokenRequest;
 import com.ExpenseOS.Backend.dto.auth.RegisterRequest;
+import com.ExpenseOS.Backend.exception.ForbiddenOperationException;
 import com.ExpenseOS.Backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,5 +36,25 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request
     ){
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getName())) {
+            throw new ForbiddenOperationException("Authentication required");
+        }
+        return ResponseEntity.ok(authService.changePassword(authentication.getName(), request));
     }
 }
