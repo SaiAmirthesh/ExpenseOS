@@ -1,9 +1,9 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
   StatusBar,
   Image
 } from 'react-native';
@@ -20,18 +20,18 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.primary === '#0052FF' ? 'dark-content' : 'light-content'} />
-      
+
       {/* Background radial effects */}
       <View style={[styles.glowBlob, { backgroundColor: colors.primary + '08' }]} />
 
       <View style={styles.contentContainer}>
-        
+
         {/* Brand Area */}
         <View className="items-center" style={styles.brandContainer}>
           <View style={styles.logoWrapper}>
-            <Image 
-              source={require('../../assets/images/logo.png')} 
-              style={styles.logoImage} 
+            <Image
+              source={require('../../assets/images/logo.png')}
+              style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
@@ -46,7 +46,6 @@ export default function OnboardingScreen() {
         {/* Feature Highlights Card */}
         <Card style={styles.featuresCard}>
           <View style={styles.featureRow}>
-            <Text style={styles.featureIcon}>💳</Text>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { color: colors.text }]}>Personal Spending</Text>
               <Text style={[styles.featureDesc, { color: colors.muted }]}>Track your daily velocity ledgers and budgets</Text>
@@ -54,7 +53,6 @@ export default function OnboardingScreen() {
           </View>
 
           <View style={styles.featureRow}>
-            <Text style={styles.featureIcon}>👥</Text>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { color: colors.text }]}>Collaborative Vaults</Text>
               <Text style={[styles.featureDesc, { color: colors.muted }]}>Split group bills equally, exactly, or by percentage</Text>
@@ -62,7 +60,6 @@ export default function OnboardingScreen() {
           </View>
 
           <View style={[styles.featureRow, { marginBottom: 0 }]}>
-            <Text style={styles.featureIcon}>⚡</Text>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { color: colors.text }]}>Optimal Settlements</Text>
               <Text style={[styles.featureDesc, { color: colors.muted }]}>Minimize debts automatically with peer approvals</Text>
