@@ -47,7 +47,7 @@ export default function LoginScreen() {
       setStorageItem(StorageKeys.ACCESS_TOKEN, response.accessToken);
       const profile = await userService.getCurrentUser();
       
-      login(response.accessToken, response.refreshToken, {
+      login(response.accessToken, {
         id: profile.id.toString(), 
         name: profile.name,
         email: profile.email,

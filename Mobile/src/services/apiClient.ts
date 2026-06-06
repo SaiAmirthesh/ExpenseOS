@@ -48,7 +48,6 @@ apiClient.interceptors.response.use(
       // Global 401 Unauthorized handling (token expired/invalid)
       if (status === 401) {
         removeStorageItem(StorageKeys.ACCESS_TOKEN);
-        removeStorageItem(StorageKeys.REFRESH_TOKEN);
         // You could trigger a custom event or callback here to reset the Auth state
       }
     } else if (error.request) {

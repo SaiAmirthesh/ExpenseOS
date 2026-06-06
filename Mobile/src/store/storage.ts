@@ -39,7 +39,6 @@ export const storage = storageInstance;
 
 export const StorageKeys = {
   ACCESS_TOKEN: 'auth.accessToken',
-  REFRESH_TOKEN: 'auth.refreshToken',
   USER_EMAIL: 'user.email',
   USER_NAME: 'user.name',
   USER_ID: 'user.id',
@@ -49,8 +48,12 @@ export const getStorageItem = (key: string): string | null => {
   return storage.getString(key) ?? null;
 };
 
-export const setStorageItem = (key: string, value: string): void => {
-  storage.set(key, value);
+export const setStorageItem = (key: string, value: string | undefined | null): void => {
+  if (value === undefined || value === null) {
+    storage.remove(key);
+  } else {
+    storage.set(key, value);
+  }
 };
 
 export const removeStorageItem = (key: string): void => {

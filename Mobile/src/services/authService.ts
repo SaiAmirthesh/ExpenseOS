@@ -3,7 +3,6 @@ import { LoginFields, RegisterFields } from '../features/auth/schemas/authSchema
 
 export interface AuthResponseData {
   accessToken: string;
-  refreshToken: string;
   email: string;
   name: string;
 }
