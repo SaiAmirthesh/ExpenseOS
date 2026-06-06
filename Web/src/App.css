@@ -1,0 +1,74 @@
+/* Custom floating background glow blobs for the hero section */
+@keyframes float-blob-1 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes float-blob-2 {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-40px, 40px) scale(1.15);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob-1 {
+  animation: float-blob-1 18s infinite ease-in-out;
+}
+
+.animate-blob-2 {
+  animation: float-blob-2 22s infinite ease-in-out;
+}
+
+/* Phone screen mockup slide animation */
+@keyframes slide-showcase {
+  0% {
+    transform: translateY(0);
+  }
+  28% {
+    transform: translateY(0);
+  }
+  33% {
+    transform: translateY(-33.33%);
+  }
+  61% {
+    transform: translateY(-33.33%);
+  }
+  66% {
+    transform: translateY(-66.66%);
+  }
+  94% {
+    transform: translateY(-66.66%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.screenshot-carousel {
+  animation: slide-showcase 15s infinite ease-in-out;
+}
+
+/* Custom glassmorphism borders and shadow */
+.premium-card-shadow {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 50px -10px rgba(215, 255, 63, 0.03);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 30px 0px rgba(215, 255, 63, 0.15);
+  border-color: rgba(215, 255, 63, 0.3);
+}

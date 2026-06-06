@@ -5,16 +5,15 @@ import { storage, StorageKeys, removeStorageItem } from '../store/storage';
 import Constants from 'expo-constants';
 
 const getBaseUrl = () => {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
+  // To connect to a local backend during development, uncomment the block below:
+  /*
   if (__DEV__) {
-    // Extracts host IP dynamically from Expo server hostUri (e.g. 192.168.29.94)
     const debuggerHost = Constants.expoConfig?.hostUri || '';
     const ipAddress = debuggerHost.split(':')[0] || 'localhost';
     return `http://${ipAddress}:8080/api/v1`;
   }
-  return 'https://expenseos.onrender.com/api/v1'; // Production fallback
+  */
+  return 'https://expenseos.onrender.com/api/v1';
 };
 
 export const apiClient = axios.create({
