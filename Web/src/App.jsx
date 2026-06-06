@@ -55,6 +55,65 @@ const Linkedin = (props) => (
   </svg>
 )
 
+const Logo = ({ size = 40, className }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 100 100" 
+    fill="none" 
+    className={className}
+  >
+    <defs>
+      <linearGradient id="webShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#D7FF3F" />
+        <stop offset="100%" stopColor="#00E5FF" />
+      </linearGradient>
+      <linearGradient id="webInnerWaveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.18" />
+        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.03" />
+      </linearGradient>
+    </defs>
+    <path 
+      d="M50 8 L86 28 L86 72 L50 92 L14 72 L14 28 Z" 
+      stroke="url(#webShieldGrad)" 
+      strokeWidth="4.5" 
+      strokeLinejoin="round"
+    />
+    <path 
+      d="M24 46 C34 32, 66 32, 76 46 C66 60, 34 60, 24 46 Z" 
+      fill="url(#webInnerWaveGrad)"
+    />
+    <path 
+      d="M24 54 C34 40, 66 40, 76 54 C66 68, 34 68, 24 54 Z" 
+      fill="url(#webInnerWaveGrad)"
+    />
+    <path 
+      d="M36 36 L64 36 L64 64 L36 64 Z" 
+      stroke="#D7FF3F" 
+      strokeWidth="3" 
+      strokeLinejoin="round" 
+      strokeDasharray="4 4"
+      opacity={0.85}
+    />
+    <path 
+      d="M50 30 L50 70" 
+      stroke="#D7FF3F" 
+      strokeWidth="3.5" 
+      strokeLinecap="round"
+    />
+    <path 
+      d="M30 50 L70 50" 
+      stroke="#D7FF3F" 
+      strokeWidth="3.5" 
+      strokeLinecap="round"
+    />
+    <path 
+      d="M50 44 L56 50 L50 56 L44 50 Z" 
+      fill="#FFFFFF"
+    />
+  </svg>
+)
+
 // Import screenshots
 import screenshot1 from './assets/screenshot1.jpeg'
 import screenshot2 from './assets/screenshot2.jpeg'
@@ -129,9 +188,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <a href="#" className="flex items-center space-x-3 group">
-            <div className="h-10 w-10 rounded-xl bg-brand-accent/10 flex items-center justify-center border border-brand-accent/20 group-hover:border-brand-accent/40 transition-colors duration-200">
-              <Wallet className="h-5 w-5 text-brand-accent" />
-            </div>
+            <Logo size={40} className="transition-transform duration-300 group-hover:scale-105" />
             <span className="text-xl font-bold tracking-tight text-white font-display">
               Expense<span className="text-brand-accent">OS</span>
             </span>
@@ -733,9 +790,7 @@ export default function App() {
           {/* Logo / Meta */}
           <div className="md:col-span-5 flex flex-col items-center md:items-start space-y-4 text-center md:text-left">
             <a href="#" className="flex items-center space-x-3 group">
-              <div className="h-8 w-8 rounded-lg bg-brand-accent/10 flex items-center justify-center border border-brand-accent/20">
-                <Wallet className="h-4 w-4 text-brand-accent" />
-              </div>
+              <Logo size={32} className="transition-transform duration-300 group-hover:scale-105" />
               <span className="text-lg font-bold tracking-tight text-white font-display">
                 Expense<span className="text-brand-accent">OS</span>
               </span>

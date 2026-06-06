@@ -19,6 +19,7 @@ import { useTheme } from '../../src/theme/ThemeContext';
 import { Button } from '../../src/components/common/Button';
 import { Input } from '../../src/components/common/Input';
 import { Card } from '../../src/components/common/Card';
+import { Logo } from '../../src/components/common/Logo';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -72,6 +73,9 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
+          <View style={{ marginBottom: 16 }}>
+            <Logo size={72} color={colors.primary} />
+          </View>
           <Text style={[styles.logo, { color: colors.text }]}>Expense<Text style={[styles.logoHighlight, { color: colors.primary }]}>OS</Text></Text>
           <Text style={[styles.tagline, { color: colors.muted }]}>Join the Premium Expense Platform</Text>
         </View>

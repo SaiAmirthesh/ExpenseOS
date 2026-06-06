@@ -19,6 +19,7 @@ import { queryClient } from '../src/services/queryClient';
 import { AuthProvider, useAuth } from '../src/store/authContext';
 import { Theme, Colors } from '../src/theme/theme';
 import { ThemeProvider as AppThemeProvider, useTheme } from '../src/theme/ThemeContext';
+import { Logo } from '../src/components/common/Logo';
 
 // Keep splash screen visible until custom fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -44,8 +45,8 @@ function RouteGuard() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
-      // User is not logged in, redirect to login screen
-      router.replace('/(auth)/login');
+      // User is not logged in, redirect to onboarding screen
+      router.replace('/(auth)' as any);
     } else if (isAuthenticated && inAuthGroup) {
       // User is logged in, redirect to main tabs
       router.replace('/(tabs)');
@@ -61,6 +62,9 @@ function RouteGuard() {
   if (isLoading || !fontsLoaded) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <View style={{ marginBottom: 28 }}>
+          <Logo size={96} color={colors.primary} />
+        </View>
         <Text style={styles.logo}>Expense<Text style={[styles.logoHighlight, { color: colors.primary }]}>OS</Text></Text>
         <Text style={[styles.tagline, { color: colors.muted }]}>Personal & Group Expense Management</Text>
         <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
