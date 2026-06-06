@@ -204,7 +204,7 @@ export default function App() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <a href="#download">
+            <a href="/ExpenseOS-application.apk" download="ExpenseOS-application.apk">
               <Button variant="default" size="default">
                 <Download className="mr-2 h-4 w-4" /> Download App
               </Button>
@@ -252,7 +252,7 @@ export default function App() {
               Download APK
             </a>
             <hr className="border-white/5 my-2" />
-            <a href="#download" onClick={() => setMobileMenuOpen(false)}>
+            <a href="/ExpenseOS-application.apk" download="ExpenseOS-application.apk" onClick={() => setMobileMenuOpen(false)}>
               <Button className="w-full">
                 <Download className="mr-2 h-4 w-4" /> Download APK
               </Button>
@@ -284,14 +284,14 @@ export default function App() {
             </p>
             
             {/* CTA Group */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <a href="#download">
-                <Button size="lg" className="w-full sm:w-auto text-brand-bg font-bold">
-                  <Download className="mr-2.5 h-5 w-5" /> Download Standalone APK
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 w-full">
+              <a href="/ExpenseOS-application.apk" download="ExpenseOS-application.apk" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full text-brand-bg font-bold">
+                  <Download className="mr-2.5 h-5.5 w-5.5" /> Download Standalone APK
                 </Button>
               </a>
-              <a href="#demo">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto border-white/10 hover:bg-white/5 text-white">
+              <a href="#demo" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full border-white/10 hover:bg-white/5 text-white">
                   Try Interactive Demo <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
@@ -319,7 +319,7 @@ export default function App() {
             <div className="absolute inset-0 bg-brand-accent/5 rounded-full blur-[100px] pointer-events-none" />
             
             {/* Premium Phone Mockup */}
-            <div className="relative w-[290px] h-[580px] md:w-[320px] md:h-[640px] rounded-[48px] border-[10px] border-brand-surface bg-brand-bg shadow-2xl premium-card-shadow flex flex-col overflow-hidden select-none">
+            <div className="relative w-[260px] h-[520px] sm:w-[290px] sm:h-[580px] md:w-[320px] md:h-[640px] rounded-[48px] border-[10px] border-brand-surface bg-brand-bg shadow-2xl premium-card-shadow flex flex-col overflow-hidden select-none">
               {/* Dynamic Camera Notch */}
               <div className="absolute top-2 left-1/2 transform -translate-x-1/2 h-4 w-24 bg-brand-surface rounded-full z-45 flex items-center justify-center">
                 <div className="h-1.5 w-1.5 rounded-full bg-slate-800" />
@@ -514,6 +514,27 @@ export default function App() {
               </CardContent>
             </Card>
 
+            {/* Feature 5: Dynamic Preset Themes */}
+            <Card className="col-span-1 border-brand-border bg-brand-card hover:border-brand-accent/20 transition-all duration-300 flex flex-col justify-between">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mb-4">
+                  <Palette className="h-6 w-6 text-indigo-400" />
+                </div>
+                <CardTitle>Dynamic Visual Themes</CardTitle>
+                <CardDescription>
+                  Switch background preset modes instantly. Switch between Navy Blue (Default), Pure Black (High Contrast), and Light White (Clean Day) dynamically.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {/* Theme options capsules */}
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-semibold">
+                  <div className="bg-[#0B1020] border border-brand-accent/30 p-2.5 rounded-xl text-brand-accent">Navy Blue</div>
+                  <div className="bg-[#000000] border border-white/5 p-2.5 rounded-xl text-white">Pure Black</div>
+                  <div className="bg-[#F3F4F6] border border-brand-card/10 p-2.5 rounded-xl text-brand-bg">Light White</div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Feature 4: SVG Charts */}
             <Card className="col-span-1 md:col-span-2 border-brand-border bg-brand-card hover:border-brand-accent/20 transition-all duration-300 flex flex-col justify-between">
               <CardHeader>
@@ -568,27 +589,6 @@ export default function App() {
                   </svg>
                 </div>
 
-              </CardContent>
-            </Card>
-
-            {/* Feature 5: Dynamic Preset Themes */}
-            <Card className="col-span-1 border-brand-border bg-brand-card hover:border-brand-accent/20 transition-all duration-300 flex flex-col justify-between">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mb-4">
-                  <Palette className="h-6 w-6 text-indigo-400" />
-                </div>
-                <CardTitle>Dynamic Visual Themes</CardTitle>
-                <CardDescription>
-                  Switch background preset modes instantly. Switch between Navy Blue (Default), Pure Black (High Contrast), and Light White (Clean Day) dynamically.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {/* Theme options capsules */}
-                <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-semibold">
-                  <div className="bg-[#0B1020] border border-brand-accent/30 p-2.5 rounded-xl text-brand-accent">Navy Blue</div>
-                  <div className="bg-[#000000] border border-white/5 p-2.5 rounded-xl text-white">Pure Black</div>
-                  <div className="bg-[#F3F4F6] border border-brand-card/10 p-2.5 rounded-xl text-brand-bg">Light White</div>
-                </div>
               </CardContent>
             </Card>
 
@@ -731,51 +731,36 @@ export default function App() {
       <section id="download" className="py-24 px-6 relative">
         <div className="max-w-5xl mx-auto">
           
-          <Card className="border-brand-border bg-gradient-to-br from-brand-card to-[#0B1020] p-8 md:p-12 premium-card-shadow border border-brand-accent/10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-12">
+          <Card className="border-brand-border bg-gradient-to-br from-brand-card to-[#0B1020] p-8 md:p-12 premium-card-shadow border border-brand-accent/10 relative overflow-hidden flex flex-col items-center justify-center text-center gap-8 max-w-3xl mx-auto">
             
             {/* Highlight Glow blur */}
-            <div className="absolute right-[-10%] top-[-10%] w-[350px] h-[350px] bg-brand-accent/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute inset-0 bg-brand-accent/5 rounded-full blur-[100px] pointer-events-none" />
             
-            <div className="flex flex-col space-y-6 text-center md:text-left max-w-xl">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20 self-center md:self-start">
+            <div className="flex flex-col space-y-6 items-center justify-center max-w-2xl relative z-10">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-accent/10 border border-brand-accent/20 self-center">
                 <Sparkles className="h-3.5 w-3.5 text-brand-accent" />
                 <span className="text-[10px] font-bold text-brand-accent uppercase tracking-wider">Android Standalone APK</span>
               </div>
               <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight font-display text-white">
                 Download Standalone preview build
               </h2>
-              <p className="text-sm text-brand-muted leading-relaxed font-sans">
-                EAS Android preview build is compiled as an installation-ready standalone APK. Tap below to download the APK directly, or scan the QR code via Expo Go for development.
+              <p className="text-sm text-brand-muted leading-relaxed font-sans max-w-xl">
+                EAS Android preview build is compiled as an installation-ready standalone APK. Tap below to download the APK directly to your device.
               </p>
               
               {/* Badge download buttons */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
-                <Button size="lg" className="bg-brand-accent text-brand-bg font-extrabold py-6 rounded-2xl shadow-xl shadow-brand-accent/10 glow-hover">
-                  <Download className="mr-2.5 h-5.5 w-5.5" /> Download Android APK
-                </Button>
-                <Button variant="outline" size="lg" className="border-white/10 hover:bg-white/5 py-6 rounded-2xl">
-                  View Source Code
-                </Button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 w-full sm:w-auto">
+                <a href="/ExpenseOS-application.apk" download="ExpenseOS-application.apk" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full bg-brand-accent text-brand-bg font-extrabold py-6 rounded-2xl shadow-xl shadow-brand-accent/10 glow-hover">
+                    <Download className="mr-2.5 h-5.5 w-5.5" /> Download Android APK
+                  </Button>
+                </a>
+                <a href="https://github.com/SaiAmirthesh/ExpenseOS" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full border-white/10 hover:bg-white/5 py-6 rounded-2xl">
+                    View Source Code
+                  </Button>
+                </a>
               </div>
-            </div>
-
-            {/* Mock QR Card */}
-            <div className="glass-card rounded-[32px] p-6 w-[240px] text-center flex flex-col items-center justify-center border border-white/10 shadow-2xl relative">
-              <div className="bg-white p-4 rounded-2xl mb-4 border border-brand-border flex items-center justify-center">
-                {/* Visual grid representing QR Code */}
-                <div className="h-28 w-28 flex flex-col justify-between">
-                  <div className="flex justify-between">
-                    <div className="h-8 w-8 bg-black rounded" />
-                    <div className="h-8 w-8 bg-black rounded" />
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="h-8 w-8 bg-black rounded" />
-                    <div className="h-4 w-4 bg-brand-accent rounded" />
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs font-semibold text-white">Scan Metro Code</p>
-              <p className="text-[10px] text-brand-muted mt-1 leading-relaxed">Run the app instantly on your phone via Expo Go client.</p>
             </div>
 
           </Card>
