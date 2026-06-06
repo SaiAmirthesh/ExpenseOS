@@ -15,11 +15,14 @@ import { useRouter } from 'expo-router';
 import { registerSchema, RegisterFields } from '../../src/features/auth/schemas/authSchema';
 import { authService } from '../../src/services/authService';
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { Button } from '../../src/components/common/Button';
 import { Input } from '../../src/components/common/Input';
+import { Card } from '../../src/components/common/Card';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,30 +64,31 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-      style={styles.keyboardView}
+      style={[styles.keyboardView, { backgroundColor: colors.background }]}
     >
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.logo}>Expense<Text style={styles.logoHighlight}>OS</Text></Text>
-          <Text style={styles.tagline}>Join the Premium Expense Platform</Text>
+          <Text style={[styles.logo, { color: colors.text }]}>Expense<Text style={[styles.logoHighlight, { color: colors.primary }]}>OS</Text></Text>
+          <Text style={[styles.tagline, { color: colors.muted }]}>Join the Premium Expense Platform</Text>
         </View>
 
-        <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Create Account</Text>
-          <Text style={styles.formSubtitle}>Get started with a free account today</Text>
+        <Card style={styles.formContainer}>
+          <Text style={[styles.formTitle, { color: colors.text }]}>Create Account</Text>
+          <Text style={[styles.formSubtitle, { color: colors.muted }]}>Get started with a free account today</Text>
 
           {serverError && (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>{serverError}</Text>
+            <View style={[styles.errorBanner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+              <Text style={[styles.errorBannerText, { color: colors.error }]}>{serverError}</Text>
             </View>
           )}
 
           {successMessage && (
-            <View style={styles.successBanner}>
-              <Text style={styles.successBannerText}>{successMessage}</Text>
+            <View style={[styles.successBanner, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '25' }]}>
+              <Text style={[styles.successBannerText, { color: colors.primary }]}>{successMessage}</Text>
             </View>
           )}
 
@@ -139,19 +143,19 @@ export default function RegisterScreen() {
           />
 
           <Button
-            title="Register"
+            title="Register Account"
             onPress={handleSubmit(onSubmit)}
             isLoading={isLoading}
             style={styles.registerButton}
           />
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.muted }]}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-              <Text style={styles.footerLink}>Sign In</Text>
+              <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </Card>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 40,
-    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
     letterSpacing: -1,
   },
@@ -182,52 +186,53 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 14,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
     marginTop: 8,
     letterSpacing: 0.5,
   },
   formContainer: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: 24,
+    marginBottom: 0,
   },
   formTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
     marginBottom: 6,
   },
   formSubtitle: {
     fontSize: 14,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
     marginBottom: 24,
   },
   errorBanner: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.error,
-    borderRadius: 8,
+    borderColor: 'rgba(255, 107, 107, 0.15)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 20,
   },
   errorBannerText: {
     color: Colors.error,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
   successBanner: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.success,
-    borderRadius: 8,
+    borderColor: 'rgba(215, 255, 63, 0.15)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 20,
   },
   successBannerText: {
-    color: Colors.success,
-    fontSize: 14,
+    color: Colors.primary,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
   registerButton: {
@@ -241,10 +246,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: Colors.muted,
     fontSize: 14,
+    fontFamily: 'Inter-Regular',
   },
   footerLink: {
     color: Colors.primary,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-Bold',
     fontSize: 14,
   },
 });

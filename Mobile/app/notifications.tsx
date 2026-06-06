@@ -15,12 +15,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../src/theme/theme';
 import { useAuth } from '../src/store/authContext';
+import { useTheme } from '../src/theme/ThemeContext';
 import { groupService } from '../src/services/groupService';
 import { balanceService } from '../src/services/balanceService';
 import { invitationService } from '../src/services/invitationService';
 import { settlementService } from '../src/services/settlementService';
 import { Card } from '../src/components/common/Card';
 import { Button } from '../src/components/common/Button';
+import { Badge } from '../src/components/common/Badge';
 
 const ArrowLeftIcon = ArrowLeft as any;
 const BellIcon = Bell as any;
@@ -35,6 +37,8 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
 
   const [feedbackSuccess, setFeedbackSuccess] = React.useState<string | null>(null);
   const [feedbackError, setFeedbackError] = React.useState<string | null>(null);
@@ -178,73 +182,73 @@ export default function NotificationsScreen() {
   const totalCount = pendingInvitations.length + pendingSettlements.length + suggestions.length;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
         <View style={styles.badgeWrapper}>
           {totalCount > 0 && (
-            <View style={styles.headerBadge}>
-              <Text style={styles.headerBadgeText}>{totalCount}</Text>
+            <View style={[styles.headerBadge, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.headerBadgeText, { color: contrastIconColor }]}>{totalCount}</Text>
             </View>
           )}
         </View>
       </View>
 
       {feedbackSuccess && (
-        <View style={[styles.feedbackBanner, styles.successBanner]}>
-          <Text style={styles.successBannerText}>{feedbackSuccess}</Text>
+        <View style={[styles.feedbackBanner, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '25' }]}>
+          <Text style={[styles.successBannerText, { color: colors.primary }]}>{feedbackSuccess}</Text>
         </View>
       )}
 
       {feedbackError && (
-        <View style={[styles.feedbackBanner, styles.errorBanner]}>
-          <Text style={styles.errorBannerText}>{feedbackError}</Text>
+        <View style={[styles.feedbackBanner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+          <Text style={[styles.errorBannerText, { color: colors.error }]}>{feedbackError}</Text>
         </View>
       )}
 
       {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Group Invites Section */}
           <View style={styles.sectionHeader}>
-            <MailIcon size={16} color={Colors.secondary} />
-            <Text style={styles.sectionTitle}>Group Invites ({pendingInvitations.length})</Text>
+            <MailIcon size={16} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Invites ({pendingInvitations.length})</Text>
           </View>
           
           {pendingInvitations.length === 0 ? (
             <Card style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No pending group invites</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>No pending group invites</Text>
             </Card>
           ) : (
             pendingInvitations.map((invite) => (
-              <Card key={invite.id} style={styles.notificationCard}>
+              <Card key={invite.id} style={[styles.notificationCard, { borderLeftColor: colors.primary }]}>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>{invite.groupName}</Text>
-                  <Text style={styles.cardSub}>Invited by: {invite.invitedBy}</Text>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>{invite.groupName}</Text>
+                  <Text style={[styles.cardSub, { color: colors.muted }]}>Invited by: {invite.invitedBy}</Text>
                 </View>
                 <View style={styles.actionRow}>
                   <TouchableOpacity 
-                    style={[styles.circleBtn, styles.rejectBtn]}
+                    style={[styles.circleBtn, styles.rejectBtn, { borderColor: colors.border }]}
                     onPress={() => rejectInviteMutation.mutate(invite.id)}
                     disabled={rejectInviteMutation.isPending || acceptInviteMutation.isPending}
                     activeOpacity={0.7}
                   >
-                    <XIcon size={16} color={Colors.error} />
+                    <XIcon size={16} color={colors.error} />
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.circleBtn, styles.acceptBtn]}
+                    style={[styles.circleBtn, styles.acceptBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                     onPress={() => acceptInviteMutation.mutate(invite.id)}
                     disabled={rejectInviteMutation.isPending || acceptInviteMutation.isPending}
                     activeOpacity={0.7}
                   >
-                    <CheckIcon size={16} color="#000000" />
+                    <CheckIcon size={16} color={contrastIconColor} />
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -253,35 +257,35 @@ export default function NotificationsScreen() {
 
           {/* Settlement Suggestions Section */}
           <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-            <DollarSignIcon size={16} color={Colors.secondary} />
-            <Text style={styles.sectionTitle}>Suggested Payments ({suggestions.length})</Text>
+            <DollarSignIcon size={16} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Suggested Payments ({suggestions.length})</Text>
           </View>
 
           {suggestions.length === 0 ? (
             <Card style={styles.emptyCard}>
-              <Text style={styles.emptyText}>You do not owe anyone money!</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>You do not owe anyone money!</Text>
             </Card>
           ) : (
             suggestions.map((s, index) => (
-              <Card key={index} style={styles.notificationCard}>
+              <Card key={index} style={[styles.notificationCard, { borderLeftColor: colors.primary }]}>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>₹{s.amount.toLocaleString()}</Text>
-                  <Text style={styles.cardSub}>
-                    Pay <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>{s.toUserName}</Text> in {s.groupName}
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>₹{s.amount.toLocaleString()}</Text>
+                  <Text style={[styles.cardSub, { color: colors.muted }]}>
+                    Pay <Text style={{ color: colors.text, fontWeight: 'bold' }}>{s.toUserName}</Text> in {s.groupName}
                   </Text>
                 </View>
                 <TouchableOpacity 
-                  style={styles.settleBtn}
+                  style={[styles.settleBtn, { backgroundColor: colors.primary }]}
                   onPress={() => handleQuickSettle(s.groupId, s.toUserId, s.amount)}
                   disabled={createSettlementMutation.isPending}
-                  activeOpacity={0.7}
+                  activeOpacity={0.75}
                 >
                   {createSettlementMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#000000" />
+                    <ActivityIndicator size="small" color={contrastIconColor} />
                   ) : (
                     <>
-                      <SendIcon size={14} color="#000000" />
-                      <Text style={styles.settleBtnText}>Settle</Text>
+                      <SendIcon size={14} color={contrastIconColor} />
+                      <Text style={[styles.settleBtnText, { color: contrastIconColor }]}>Settle</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -291,44 +295,44 @@ export default function NotificationsScreen() {
 
           {/* Settlement Requests Section */}
           <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-            <DollarSignIcon size={16} color={Colors.primary} />
-            <Text style={styles.sectionTitle}>Settlement Approvals ({pendingSettlements.length})</Text>
+            <DollarSignIcon size={16} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Settlement Approvals ({pendingSettlements.length})</Text>
           </View>
 
           {pendingSettlements.length === 0 ? (
             <Card style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No pending settlement approvals</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>No pending settlement approvals</Text>
             </Card>
           ) : (
             pendingSettlements.map((settlement) => (
-              <Card key={settlement.id} style={styles.notificationCard}>
+              <Card key={settlement.id} style={[styles.notificationCard, { borderLeftColor: colors.primary }]}>
                 <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>₹{settlement.amount.toLocaleString()}</Text>
-                  <Text style={styles.cardSub}>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>₹{settlement.amount.toLocaleString()}</Text>
+                  <Text style={[styles.cardSub, { color: colors.muted }]}>
                     From: {settlement.fromUserName} for {settlement.groupName}
                   </Text>
                   {settlement.note && (
-                    <Text style={styles.cardNote}>
+                    <Text style={[styles.cardNote, { color: colors.muted }]}>
                       "{settlement.note}"
                     </Text>
                   )}
                 </View>
                 <View style={styles.actionRow}>
                   <TouchableOpacity 
-                    style={[styles.circleBtn, styles.rejectBtn]}
+                    style={[styles.circleBtn, styles.rejectBtn, { borderColor: colors.border }]}
                     onPress={() => rejectSettlementMutation.mutate(settlement.id)}
                     disabled={rejectSettlementMutation.isPending || approveSettlementMutation.isPending}
                     activeOpacity={0.7}
                   >
-                    <XIcon size={16} color={Colors.error} />
+                    <XIcon size={16} color={colors.error} />
                   </TouchableOpacity>
                   <TouchableOpacity 
-                    style={[styles.circleBtn, styles.acceptBtn]}
+                    style={[styles.circleBtn, styles.acceptBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                     onPress={() => approveSettlementMutation.mutate(settlement.id)}
                     disabled={rejectSettlementMutation.isPending || approveSettlementMutation.isPending}
                     activeOpacity={0.7}
                   >
-                    <CheckIcon size={16} color="#000000" />
+                    <CheckIcon size={16} color={contrastIconColor} />
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -358,8 +362,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   badgeWrapper: {
@@ -370,12 +374,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   headerBadgeText: {
     color: '#000000',
     fontSize: 11,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   loaderContainer: {
     flex: 1,
@@ -395,18 +399,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   emptyCard: {
     paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 20,
   },
   emptyText: {
     color: Colors.muted,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
   },
   notificationCard: {
     flexDirection: 'row',
@@ -415,7 +423,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
+    borderLeftColor: Colors.primary,
   },
   cardInfo: {
     flex: 1,
@@ -424,27 +432,29 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   cardSub: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginTop: 4,
   },
   cardNote: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     fontStyle: 'italic',
     marginTop: 4,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   circleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -464,36 +474,38 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 10,
   },
   settleBtnText: {
     fontSize: 12,
     color: '#000000',
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   feedbackBanner: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 12,
     marginHorizontal: 24,
     marginTop: 16,
   },
   successBanner: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    borderColor: Colors.success,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
+    borderColor: 'rgba(215, 255, 63, 0.15)',
   },
   errorBanner: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    borderColor: Colors.error,
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
+    borderColor: 'rgba(255, 107, 107, 0.15)',
   },
   successBannerText: {
-    color: Colors.success,
-    fontSize: 14,
+    color: Colors.primary,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
   errorBannerText: {
     color: Colors.error,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
 });

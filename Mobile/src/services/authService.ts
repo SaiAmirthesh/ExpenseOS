@@ -25,4 +25,13 @@ export const authService = {
     });
     return response.data;
   },
+
+  changePassword: async (data: any): Promise<string> => {
+    const response = await apiClient.put<string>('/auth/change-password', {
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+      confirmPassword: data.confirmPassword,
+    });
+    return response.data;
+  },
 };

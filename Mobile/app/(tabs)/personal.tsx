@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -38,10 +37,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { personalExpenseService, PersonalExpenseCategory } from '../../src/services/personalExpenseService';
 import { getStorageItem, setStorageItem } from '../../src/store/storage';
 import { Card } from '../../src/components/common/Card';
 import { Skeleton } from '../../src/components/common/Skeleton';
+import { Input } from '../../src/components/common/Input';
+import { Button } from '../../src/components/common/Button';
+import { ExpenseCard } from '../../src/components/common/ExpenseCard';
+import { EmptyState } from '../../src/components/common/EmptyState';
 
 // Icon casts
 const WalletIcon = Wallet as any;
@@ -83,11 +87,11 @@ const CATEGORY_COLORS: Record<PersonalExpenseCategory, string> = {
   TRANSPORT: '#4ECDC4',
   SHOPPING: '#FFE66D',
   ENTERTAINMENT: '#A855F7',
-  HEALTH: '#34C759',
+  HEALTH: '#D7FF3F', // lime success
   EDUCATION: '#00E5FF',
   BILLS: '#FF9500',
-  TRAVEL: '#39FF14',
-  OTHER: '#A0A0A0',
+  TRAVEL: '#D7FF3F',
+  OTHER: '#B4BCD0',
 };
 
 function getCurrentMonthLabel(): string {
@@ -106,6 +110,7 @@ function getCurrentMonthRange(): { start: string; end: string } {
 
 export default function PersonalTab() {
   const router = useRouter();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [budgetLimit, setBudgetLimit] = useState<number>(() => {
@@ -161,216 +166,191 @@ export default function PersonalTab() {
   };
 
   return (
-    <View style={[styles.safeArea, { paddingTop: Math.max(insets.top, 16) }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16) }]}>
       <ScrollView
         contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerMonth}>{getCurrentMonthLabel()}</Text>
-            <Text style={styles.headerTitle}>My Spending</Text>
+            <Text style={[styles.headerMonth, { color: colors.muted }]}>{getCurrentMonthLabel()}</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Personal Vault</Text>
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.iconBtn}
+              style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => {
                 setBudgetInput(budgetLimit > 0 ? String(budgetLimit) : '');
                 setShowBudgetModal(true);
               }}
               activeOpacity={0.7}
             >
-              <SettingsIcon size={20} color={Colors.muted} />
+              <SettingsIcon size={20} color={colors.muted} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.addBtn}
+              style={[styles.addBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/personal-expenses/create')}
               activeOpacity={0.7}
             >
-              <PlusIcon size={20} color="#000000" />
+              <PlusIcon size={20} color={colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF'} />
             </TouchableOpacity>
           </View>
         </View>
 
         {isLoading ? (
           <View style={{ gap: 12 }}>
-            <Skeleton height={160} style={{ borderRadius: 16 }} />
-            <Skeleton height={100} style={{ borderRadius: 16 }} />
-            <Skeleton height={200} style={{ borderRadius: 16 }} />
+            <Skeleton height={180} style={{ borderRadius: 20 }} />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Skeleton height={100} style={{ flex: 1, borderRadius: 20 }} />
+              <Skeleton height={100} style={{ flex: 1, borderRadius: 20 }} />
+            </View>
+            <Skeleton height={200} style={{ borderRadius: 20 }} />
           </View>
         ) : (
           <>
             {/* Monthly Total Hero */}
-            <Card style={styles.heroCard}>
+            <Card style={[styles.heroCard, { borderLeftColor: colors.primary }]} delay={50}>
               <View style={styles.heroTop}>
                 <View>
-                  <Text style={styles.heroLabel}>This Month's Total</Text>
-                  <Text style={[styles.heroAmount, isOverBudget && { color: Colors.error }]}>
+                  <Text style={[styles.heroLabel, { color: colors.muted }]}>This Month's Spending</Text>
+                  <Text style={[styles.heroAmount, { color: colors.text }, isOverBudget && { color: colors.error }]}>
                     ₹{monthlyTotal.toLocaleString()}
                   </Text>
-                  <Text style={styles.heroSub}>
-                    {monthlyExpenses.length} expense{monthlyExpenses.length !== 1 ? 's' : ''} recorded
+                  <Text style={[styles.heroSub, { color: colors.muted }]}>
+                    {monthlyExpenses.length} transaction{monthlyExpenses.length !== 1 ? 's' : ''} logged
                   </Text>
                 </View>
-                <View style={[styles.heroIconCircle, isOverBudget && { backgroundColor: 'rgba(255,59,48,0.15)' }]}>
-                  <WalletIcon size={26} color={isOverBudget ? Colors.error : Colors.primary} />
+                <View style={[styles.heroIconCircle, { backgroundColor: colors.primary + '15' }, isOverBudget && { backgroundColor: colors.error + '15' }]}>
+                  <WalletIcon size={24} color={isOverBudget ? colors.error : colors.primary} />
                 </View>
               </View>
 
               {/* Budget progress */}
               {budgetLimit > 0 ? (
-                <View style={styles.budgetSection}>
+                <View style={[styles.budgetSection, { borderTopColor: colors.border }]}>
                   <View style={styles.budgetRow}>
-                    <Text style={styles.budgetLabel}>
-                      {isOverBudget ? 'Over Budget by' : 'Budget Remaining'}
+                    <Text style={[styles.budgetLabel, { color: colors.muted }]}>
+                      {isOverBudget ? 'Budget Deficit' : 'Available Spending'}
                     </Text>
-                    <Text style={[styles.budgetValue, { color: isOverBudget ? Colors.error : Colors.primary }]}>
+                    <Text style={[styles.budgetValue, { color: isOverBudget ? colors.error : colors.primary }]}>
                       {isOverBudget
                         ? `₹${(monthlyTotal - budgetLimit).toLocaleString()}`
                         : `₹${spendingLeft!.toLocaleString()}`}
                     </Text>
                   </View>
-                  <View style={styles.progressTrack}>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.surface }]}>
                     <View
                       style={[
                         styles.progressFill,
                         {
                           width: `${Math.round(budgetProgress * 100)}%` as any,
                           backgroundColor: isOverBudget
-                            ? Colors.error
+                            ? colors.error
                             : budgetProgress > 0.8
-                            ? Colors.warning
-                            : Colors.primary,
+                            ? colors.warning
+                            : colors.primary,
                         },
                       ]}
                     />
                   </View>
                   <View style={styles.budgetLimits}>
-                    <Text style={styles.budgetLimitText}>₹0</Text>
-                    <Text style={styles.budgetLimitText}>
+                    <Text style={[styles.budgetLimitText, { color: colors.muted }]}>₹0</Text>
+                    <Text style={[styles.budgetLimitText, { color: colors.muted }]}>
                       Limit: ₹{budgetLimit.toLocaleString()}
                     </Text>
                   </View>
                   {isOverBudget && (
-                    <View style={styles.overBudgetAlert}>
-                      <AlertCircleIcon size={14} color={Colors.error} />
-                      <Text style={styles.overBudgetText}>
-                        You've exceeded your monthly budget limit!
+                    <View style={[styles.overBudgetAlert, { backgroundColor: colors.error + '10' }]}>
+                      <AlertCircleIcon size={14} color={colors.error} />
+                      <Text style={[styles.overBudgetText, { color: colors.error }]}>
+                        You have exceeded your monthly budget ceiling!
                       </Text>
                     </View>
                   )}
                 </View>
               ) : (
                 <TouchableOpacity
-                  style={styles.setBudgetPrompt}
+                  style={[styles.setBudgetPrompt, { borderTopColor: colors.border }]}
                   onPress={() => setShowBudgetModal(true)}
                   activeOpacity={0.7}
                 >
-                  <TargetIcon size={14} color={Colors.secondary} />
-                  <Text style={styles.setBudgetPromptText}>Tap to set a monthly budget limit</Text>
-                  <ChevronRightIcon size={14} color={Colors.secondary} />
+                  <TargetIcon size={14} color={colors.primary} />
+                  <Text style={[styles.setBudgetPromptText, { color: colors.primary }]}>Set a monthly budget target</Text>
+                  <ChevronRightIcon size={14} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </Card>
 
             {/* Quick Stats Row */}
             <View style={styles.statsRow}>
-              <Card style={styles.statChip}>
-                <TrendingUpIcon size={16} color={Colors.secondary} />
-                <Text style={styles.statChipValue}>
+              <Card style={styles.statChip} delay={100}>
+                <TrendingUpIcon size={16} color={colors.primary} />
+                <Text style={[styles.statChipValue, { color: colors.text }]}>
                   {monthlyExpenses.length > 0
                     ? `₹${Math.round(monthlyTotal / monthlyExpenses.length).toLocaleString()}`
                     : '₹0'}
                 </Text>
-                <Text style={styles.statChipLabel}>Avg / expense</Text>
+                <Text style={[styles.statChipLabel, { color: colors.muted }]}>AVERAGE COST</Text>
               </Card>
-              <Card style={styles.statChip}>
-                <TargetIcon size={16} color={budgetLimit > 0 ? Colors.primary : Colors.muted} />
-                <Text style={styles.statChipValue}>
-                  {budgetLimit > 0 ? `₹${budgetLimit.toLocaleString()}` : 'Not set'}
+              <Card style={styles.statChip} delay={150}>
+                <TargetIcon size={16} color={budgetLimit > 0 ? colors.primary : colors.muted} />
+                <Text style={[styles.statChipValue, { color: colors.text }]}>
+                  {budgetLimit > 0 ? `₹${budgetLimit.toLocaleString()}` : 'No target'}
                 </Text>
-                <Text style={styles.statChipLabel}>Monthly limit</Text>
+                <Text style={[styles.statChipLabel, { color: colors.muted }]}>MONTH CEILING</Text>
               </Card>
             </View>
 
             {/* Recent Expenses */}
             <View style={styles.recentHeader}>
-              <Text style={styles.sectionTitle}>Recent Expenses</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Flow</Text>
               <TouchableOpacity
                 onPress={() => router.push('/personal-expenses')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.seeAllText}>See all</Text>
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
               </TouchableOpacity>
             </View>
 
             {recentFive.length === 0 ? (
-              <Card style={styles.emptyCard}>
-                <WalletIcon size={32} color={Colors.muted} />
-                <Text style={styles.emptyTitle}>No expenses yet</Text>
-                <Text style={styles.emptySubtext}>
-                  Start logging your personal expenses to track spending.
-                </Text>
-                <TouchableOpacity
-                  style={styles.emptyAction}
-                  onPress={() => router.push('/personal-expenses/create')}
-                  activeOpacity={0.7}
-                >
-                  <PlusIcon size={14} color="#000000" />
-                  <Text style={styles.emptyActionText}>Add First Expense</Text>
-                </TouchableOpacity>
-              </Card>
+              <EmptyState
+                title="No transactions logged"
+                description="Start tracking your individual spending vault accounts now."
+                icon={<WalletIcon size={32} color={colors.muted} />}
+                actionTitle="Add Expense"
+                onActionPress={() => router.push('/personal-expenses/create')}
+              />
             ) : (
-              recentFive.map((expense) => {
+              recentFive.map((expense, idx) => {
                 const cat = expense.category as PersonalExpenseCategory;
-                const color = CATEGORY_COLORS[cat];
+                const color = CATEGORY_COLORS[cat] || colors.muted;
                 const CatIcon = CATEGORY_ICON_MAP[cat] || PackageIcon;
                 return (
-                  <TouchableOpacity
+                  <ExpenseCard
                     key={expense.id}
-                    style={[styles.expenseRow, { borderLeftColor: color }]}
+                    title={expense.title}
+                    amount={expense.amount}
+                    date={expense.expenseDate}
+                    category={cat}
+                    categoryColor={color}
+                    categoryIcon={<CatIcon size={18} color={color} />}
                     onPress={() =>
                       router.push({
                         pathname: '/personal-expenses/create',
                         params: { id: expense.id },
                       })
                     }
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.expenseIconBox, { backgroundColor: `${color}22` }]}>
-                      <CatIcon size={18} color={color} />
-                    </View>
-                    <View style={styles.expenseInfo}>
-                      <Text style={styles.expenseTitle} numberOfLines={1}>
-                        {expense.title}
-                      </Text>
-                      <View style={styles.expenseMeta}>
-                        <View
-                          style={[
-                            styles.catBadge,
-                            { backgroundColor: `${color}20`, borderColor: `${color}55` },
-                          ]}
-                        >
-                          <Text style={[styles.catBadgeText, { color }]}>
-                            {cat.charAt(0) + cat.slice(1).toLowerCase()}
-                          </Text>
-                        </View>
-                        <Text style={styles.expenseDate}>{expense.expenseDate}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.expenseAmount}>
-                      ₹{expense.amount.toLocaleString()}
-                    </Text>
-                    <ArrowRightIcon size={14} color={Colors.muted} style={{ marginLeft: 4 }} />
-                  </TouchableOpacity>
+                    delay={200 + idx * 50}
+                  />
                 );
               })
             )}
@@ -391,55 +371,50 @@ export default function PersonalTab() {
           style={styles.modalOverlay}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Set Monthly Budget</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Set Monthly Target</Text>
               <TouchableOpacity onPress={() => setShowBudgetModal(false)} activeOpacity={0.7}>
-                <XIcon size={20} color={Colors.muted} />
+                <XIcon size={20} color={colors.muted} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalSubtext}>
+            <Text style={[styles.modalSubtext, { color: colors.muted }]}>
               Set a limit for your monthly personal spending. You'll see progress and alerts when nearing the limit.
             </Text>
-            <View style={styles.modalInputRow}>
-              <Text style={styles.rupeeSymbol}>₹</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="e.g. 10000"
-                placeholderTextColor={Colors.muted}
-                keyboardType="numeric"
-                value={budgetInput}
-                onChangeText={setBudgetInput}
-                autoFocus
-              />
-            </View>
+            
+            <Input
+              label="Budget Ceiling (₹)"
+              placeholder="e.g. 25000"
+              keyboardType="numeric"
+              value={budgetInput}
+              onChangeText={setBudgetInput}
+              autoFocus
+            />
+
             {budgetLimit > 0 && (
-              <Text style={styles.currentLimit}>
+              <Text style={[styles.currentLimit, { color: colors.muted }]}>
                 Current limit: ₹{budgetLimit.toLocaleString()}
               </Text>
             )}
             <View style={styles.modalActions}>
               {budgetLimit > 0 && (
-                <TouchableOpacity
-                  style={styles.clearBtn}
+                <Button
+                  title="Clear Ceiling"
+                  variant="outline"
                   onPress={() => {
                     setBudgetLimit(0);
                     setStorageItem(STORAGE_KEY_BUDGET, '0');
                     setShowBudgetModal(false);
                   }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.clearBtnText}>Clear Limit</Text>
-                </TouchableOpacity>
+                  style={styles.clearBtn}
+                  textStyle={{ color: colors.error }}
+                />
               )}
-              <TouchableOpacity
-                style={styles.saveBtn}
+              <Button
+                title="Save Target"
                 onPress={saveBudget}
-                activeOpacity={0.7}
-              >
-                <CheckIcon size={16} color="#000000" />
-                <Text style={styles.saveBtnText}>Save</Text>
-              </TouchableOpacity>
+                style={styles.saveBtn}
+              />
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -454,10 +429,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   container: {
-    padding: 24,
-    paddingTop: 8,
+    paddingHorizontal: 24,
   },
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -466,14 +439,15 @@ const styles = StyleSheet.create({
   },
   headerMonth: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   headerActions: {
@@ -484,7 +458,7 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -494,12 +468,11 @@ const styles = StyleSheet.create({
   addBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Hero card
   heroCard: {
     marginBottom: 16,
     borderLeftWidth: 3,
@@ -513,30 +486,32 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
     fontSize: 11,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     marginBottom: 6,
   },
   heroAmount: {
     fontSize: 38,
-    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     color: '#FFFFFF',
+    letterSpacing: -1,
     marginBottom: 4,
   },
   heroSub: {
-    fontSize: 13,
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
   },
   heroIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Budget
   budgetSection: {
     borderTopWidth: 1,
     borderTopColor: Colors.border,
@@ -548,12 +523,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   budgetLabel: {
-    fontSize: 13,
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
   },
   budgetValue: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   progressTrack: {
     height: 6,
@@ -572,6 +548,7 @@ const styles = StyleSheet.create({
   },
   budgetLimitText: {
     fontSize: 10,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
   },
   overBudgetAlert: {
@@ -579,14 +556,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 10,
-    backgroundColor: 'rgba(255,59,48,0.1)',
-    borderRadius: 6,
-    padding: 8,
+    backgroundColor: 'rgba(255,107,107,0.08)',
+    borderRadius: 10,
+    padding: 10,
   },
   overBudgetText: {
     color: Colors.error,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   setBudgetPrompt: {
     flexDirection: 'row',
@@ -594,150 +571,66 @@ const styles = StyleSheet.create({
     gap: 8,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
-    paddingTop: 12,
+    paddingTop: 14,
   },
   setBudgetPromptText: {
     flex: 1,
-    color: Colors.secondary,
+    color: Colors.primary,
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
-  // Stats row
   statsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   statChip: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 14,
     gap: 6,
+    marginBottom: 0,
   },
   statChipValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   statChipLabel: {
-    fontSize: 11,
+    fontSize: 9,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
-  // Recent header
   recentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   seeAllText: {
     color: Colors.primary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Expense row
-  expenseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderLeftWidth: 3,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
-  },
-  expenseIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  expenseInfo: {
-    flex: 1,
-  },
-  expenseTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  expenseMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  catBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  catBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     textTransform: 'uppercase',
   },
-  expenseDate: {
-    color: Colors.muted,
-    fontSize: 11,
-  },
-  expenseAmount: {
-    color: Colors.primary,
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  // Empty state
-  emptyCard: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    gap: 10,
-  },
-  emptyTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  emptySubtext: {
-    color: Colors.muted,
-    fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-  emptyAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 6,
-  },
-  emptyActionText: {
-    color: '#000000',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(11, 16, 32, 0.85)',
     justifyContent: 'flex-end',
   },
   modalCard: {
     backgroundColor: Colors.card,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 24,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -750,41 +643,20 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   modalSubtext: {
     color: Colors.muted,
     fontSize: 13,
+    fontFamily: 'Inter-Regular',
     lineHeight: 20,
     marginBottom: 20,
-  },
-  modalInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  rupeeSymbol: {
-    color: Colors.primary,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginRight: 8,
-  },
-  modalInput: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-    paddingVertical: 14,
   },
   currentLimit: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -795,29 +667,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   clearBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  clearBtnText: {
-    color: Colors.error,
-    fontWeight: '600',
-    fontSize: 14,
+    flex: 1,
+    borderColor: 'rgba(255,107,107,0.2)',
   },
   saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: Colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-  },
-  saveBtnText: {
-    color: '#000000',
-    fontWeight: 'bold',
-    fontSize: 14,
+    flex: 1,
   },
 });

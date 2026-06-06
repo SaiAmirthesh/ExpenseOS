@@ -14,8 +14,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Plus,
-  Trash2,
-  Edit2,
   Wallet,
   SlidersHorizontal,
   X,
@@ -33,18 +31,19 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import {
   personalExpenseService,
   PersonalExpenseCategory,
-  PersonalExpenseResponse,
 } from '../../src/services/personalExpenseService';
 import { PERSONAL_EXPENSE_CATEGORIES } from '../../src/features/personal-expenses/schemas/personalExpenseSchema';
+import { Card } from '../../src/components/common/Card';
+import { Skeleton } from '../../src/components/common/Skeleton';
+import { ExpenseCard } from '../../src/components/common/ExpenseCard';
+import { EmptyState } from '../../src/components/common/EmptyState';
 
-// Icon casts
 const ArrowLeftIcon = ArrowLeft as any;
 const PlusIcon = Plus as any;
-const Trash2Icon = Trash2 as any;
-const Edit2Icon = Edit2 as any;
 const WalletIcon = Wallet as any;
 const SlidersIcon = SlidersHorizontal as any;
 const XIcon = X as any;
@@ -76,17 +75,19 @@ const CATEGORY_COLORS: Record<PersonalExpenseCategory, string> = {
   TRANSPORT: '#4ECDC4',
   SHOPPING: '#FFE66D',
   ENTERTAINMENT: '#A855F7',
-  HEALTH: '#34C759',
+  HEALTH: '#D7FF3F',
   EDUCATION: '#00E5FF',
   BILLS: '#FF9500',
-  TRAVEL: '#39FF14',
-  OTHER: '#A0A0A0',
+  TRAVEL: '#D7FF3F',
+  OTHER: '#B4BCD0',
 };
 
 export default function PersonalExpensesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
 
   const [selectedCategory, setSelectedCategory] = useState<PersonalExpenseCategory | null>(null);
 
@@ -141,46 +142,46 @@ export default function PersonalExpensesScreen() {
   }, [expenses]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Expenses</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>All Expenses</Text>
         <TouchableOpacity
-          style={styles.addBtn}
+          style={[styles.addBtn, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/personal-expenses/create')}
           activeOpacity={0.7}
         >
-          <PlusIcon size={20} color="#000000" />
+          <PlusIcon size={20} color={contrastIconColor} />
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* Hero Stats Card */}
-          <View style={styles.heroCard}>
+          <Card style={styles.heroCard} delay={50}>
             <View style={styles.heroTop}>
               <View>
-                <Text style={styles.heroLabel}>
-                  {selectedCategory ? selectedCategory : 'Total Spending'}
+                <Text style={[styles.heroLabel, { color: colors.muted }]}>
+                  {selectedCategory ? `${selectedCategory} SPENDING` : 'Total Outflow'}
                 </Text>
-                <Text style={styles.heroAmount}>
+                <Text style={[styles.heroAmount, { color: colors.text }]}>
                   ₹{(selectedCategory ? filteredSpend : totalSpend).toLocaleString()}
                 </Text>
-                <Text style={styles.heroSub}>
-                  {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
-                  {selectedCategory ? ' in this category' : ' tracked'}
+                <Text style={[styles.heroSub, { color: colors.muted }]}>
+                  {filtered.length} transaction{filtered.length !== 1 ? 's' : ''}
+                  {selectedCategory ? ' in category' : ' tracked'}
                 </Text>
               </View>
-              <View style={styles.heroIconCircle}>
-                <WalletIcon size={26} color={Colors.primary} />
+              <View style={[styles.heroIconCircle, { backgroundColor: colors.primary + '12' }]}>
+                <WalletIcon size={24} color={colors.primary} />
               </View>
             </View>
 
@@ -191,7 +192,7 @@ export default function PersonalExpensesScreen() {
                   const CatIcon = CATEGORY_ICON_MAP[cat] || PackageIcon;
                   const color = CATEGORY_COLORS[cat];
                   return (
-                    <View key={cat} style={styles.breakdownChip}>
+                    <View key={cat} style={[styles.breakdownChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                       <CatIcon size={12} color={color} />
                       <Text style={[styles.breakdownAmt, { color }]}>
                         ₹{(amt as number).toLocaleString()}
@@ -199,18 +200,18 @@ export default function PersonalExpensesScreen() {
                     </View>
                   );
                 })}
-                <View style={styles.breakdownChip}>
-                  <TrendingUpIcon size={12} color={Colors.muted} />
-                  <Text style={[styles.breakdownAmt, { color: Colors.muted }]}>Top 3</Text>
+                <View style={[styles.breakdownChip, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                  <TrendingUpIcon size={12} color={colors.muted} />
+                  <Text style={[styles.breakdownAmt, { color: colors.muted }]}>Top Categories</Text>
                 </View>
               </View>
             )}
-          </View>
+          </Card>
 
           {/* Category Filter Pills */}
           <View style={styles.filterHeader}>
-            <SlidersIcon size={14} color={Colors.muted} />
-            <Text style={styles.filterLabel}>Filter by Category</Text>
+            <SlidersIcon size={14} color={colors.muted} />
+            <Text style={[styles.filterLabel, { color: colors.muted }]}>Filter by Category</Text>
           </View>
           <ScrollView
             horizontal
@@ -219,11 +220,15 @@ export default function PersonalExpensesScreen() {
             contentContainerStyle={styles.pillsContainer}
           >
             <TouchableOpacity
-              style={[styles.pill, !selectedCategory && styles.pillActive]}
+              style={[
+                styles.pill,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                !selectedCategory && [styles.pillActive, { backgroundColor: colors.primary, borderColor: colors.primary }]
+              ]}
               onPress={() => setSelectedCategory(null)}
               activeOpacity={0.7}
             >
-              <Text style={[styles.pillText, !selectedCategory && styles.pillTextActive]}>
+              <Text style={[styles.pillText, { color: colors.muted }, !selectedCategory && [styles.pillTextActive, { color: contrastIconColor }]]}>
                 All
               </Text>
             </TouchableOpacity>
@@ -236,18 +241,18 @@ export default function PersonalExpensesScreen() {
                   key={cat}
                   style={[
                     styles.pill,
-                    isActive && styles.pillActive,
-                    isActive && { borderColor: color },
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    isActive && [styles.pillActive, { backgroundColor: colors.primary, borderColor: color }],
                   ]}
                   onPress={() => setSelectedCategory(isActive ? null : cat)}
                   activeOpacity={0.7}
                 >
-                  <CatIcon size={13} color={isActive ? color : Colors.muted} />
+                  <CatIcon size={13} color={isActive ? (colors.primary === '#0052FF' ? contrastIconColor : color) : colors.muted} />
                   <Text
                     style={[
                       styles.pillText,
-                      isActive && styles.pillTextActive,
-                      isActive && { color },
+                      { color: colors.muted },
+                      isActive && [styles.pillTextActive, { color: colors.primary === '#0052FF' ? contrastIconColor : color }],
                     ]}
                   >
                     {cat.charAt(0) + cat.slice(1).toLowerCase()}
@@ -260,113 +265,58 @@ export default function PersonalExpensesScreen() {
           {/* Active filter badge */}
           {selectedCategory && (
             <TouchableOpacity
-              style={styles.clearFilter}
+              style={[styles.clearFilter, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '25' }]}
               onPress={() => setSelectedCategory(null)}
               activeOpacity={0.7}
             >
-              <Text style={styles.clearFilterText}>
-                Showing: {selectedCategory} · ₹{filteredSpend.toLocaleString()}
+              <Text style={[styles.clearFilterText, { color: colors.primary }]}>
+                Category: {selectedCategory} · ₹{filteredSpend.toLocaleString()}
               </Text>
-              <XIcon size={14} color={Colors.secondary} />
+              <XIcon size={14} color={colors.primary} />
             </TouchableOpacity>
           )}
 
           {/* Expense List */}
-          <Text style={styles.sectionTitle}>
-            {selectedCategory ? `${selectedCategory} Expenses` : 'All Expenses'}
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {selectedCategory ? `${selectedCategory} LEDGER` : 'TRANSACTION HISTORY'}
           </Text>
 
           {filtered.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <WalletIcon size={48} color={Colors.muted} />
-              <Text style={styles.emptyTitle}>No expenses yet</Text>
-              <Text style={styles.emptySubtext}>
-                {selectedCategory
-                  ? 'No expenses in this category.'
-                  : 'Tap + to log your first expense.'}
-              </Text>
-              {!selectedCategory && (
-                <TouchableOpacity
-                  style={styles.emptyAction}
-                  onPress={() => router.push('/personal-expenses/create')}
-                  activeOpacity={0.7}
-                >
-                  <PlusIcon size={16} color="#000000" />
-                  <Text style={styles.emptyActionText}>Add Expense</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <EmptyState
+              title="No transactions found"
+              description={selectedCategory ? `You don't have any logged transactions under ${selectedCategory}.` : "Start logging your personal spending ledger now."}
+              icon={<WalletIcon size={32} color={colors.muted} />}
+              actionTitle={!selectedCategory ? "Add Expense" : undefined}
+              onActionPress={!selectedCategory ? () => router.push('/personal-expenses/create') : undefined}
+            />
           ) : (
-            filtered.map((expense) => (
-              <ExpenseCard
-                key={expense.id}
-                expense={expense}
-                onEdit={() =>
-                  router.push({ pathname: '/personal-expenses/create', params: { id: expense.id } })
-                }
-                onDelete={() => handleDelete(expense.id, expense.title)}
-                isDeleting={deleteMutation.isPending}
-              />
-            ))
+            filtered.map((expense, idx) => {
+              const cat = expense.category as PersonalExpenseCategory;
+              const color = CATEGORY_COLORS[cat] || colors.muted;
+              const CatIcon = CATEGORY_ICON_MAP[cat] || PackageIcon;
+              return (
+                <ExpenseCard
+                  key={expense.id}
+                  title={expense.title}
+                  amount={expense.amount}
+                  date={expense.expenseDate}
+                  category={cat}
+                  categoryColor={color}
+                  categoryIcon={<CatIcon size={18} color={color} />}
+                  onEdit={() =>
+                    router.push({ pathname: '/personal-expenses/create', params: { id: expense.id } })
+                  }
+                  onDelete={() => handleDelete(expense.id, expense.title)}
+                  delay={100 + idx * 40}
+                />
+              );
+            })
           )}
 
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
     </SafeAreaView>
-  );
-}
-
-function ExpenseCard({
-  expense,
-  onEdit,
-  onDelete,
-  isDeleting,
-}: {
-  expense: PersonalExpenseResponse;
-  onEdit: () => void;
-  onDelete: () => void;
-  isDeleting: boolean;
-}) {
-  const cat = expense.category as PersonalExpenseCategory;
-  const color = CATEGORY_COLORS[cat] || Colors.muted;
-  const CatIcon = CATEGORY_ICON_MAP[cat] || PackageIcon;
-
-  return (
-    <View style={[styles.expenseCard, { borderLeftColor: color }]}>
-      <View style={[styles.expenseIconBox, { backgroundColor: `${color}22` }]}>
-        <CatIcon size={18} color={color} />
-      </View>
-      <View style={styles.expenseInfo}>
-        <Text style={styles.expenseTitle} numberOfLines={1}>
-          {expense.title}
-        </Text>
-        <View style={styles.expenseMeta}>
-          <View style={[styles.categoryBadge, { backgroundColor: `${color}22`, borderColor: `${color}55` }]}>
-            <Text style={[styles.categoryBadgeText, { color }]}>
-              {cat.charAt(0) + cat.slice(1).toLowerCase()}
-            </Text>
-          </View>
-          <Text style={styles.expenseDate}>{expense.expenseDate}</Text>
-        </View>
-      </View>
-      <View style={styles.expenseRight}>
-        <Text style={styles.expenseAmount}>₹{expense.amount.toLocaleString()}</Text>
-        <View style={styles.expenseActions}>
-          <TouchableOpacity onPress={onEdit} style={styles.iconBtn} activeOpacity={0.7}>
-            <Edit2Icon size={14} color={Colors.muted} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onDelete}
-            style={styles.iconBtn}
-            disabled={isDeleting}
-            activeOpacity={0.7}
-          >
-            <Trash2Icon size={14} color={Colors.error} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
   );
 }
 
@@ -386,16 +336,16 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 6 },
   addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   loaderContainer: {
@@ -405,17 +355,10 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1 },
   content: { padding: 24 },
-
-  // Hero
   heroCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
+    marginBottom: 20,
   },
   heroTop: {
     flexDirection: 'row',
@@ -423,27 +366,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   heroLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     marginBottom: 6,
   },
   heroAmount: {
     fontSize: 36,
-    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     color: '#FFFFFF',
+    letterSpacing: -1,
     marginBottom: 4,
   },
   heroSub: {
-    fontSize: 13,
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
   },
   heroIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -461,19 +407,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: Colors.surface,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   breakdownAmt: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
-
-  // Filter pills
   filterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,158 +425,66 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   filterLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  pillsScroll: { marginBottom: 12 },
+  pillsScroll: { marginBottom: 16 },
   pillsContainer: { gap: 8, paddingRight: 8 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   pillActive: {
-    backgroundColor: 'rgba(57, 255, 20, 0.1)',
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     borderColor: Colors.primary,
   },
   pillText: {
     fontSize: 13,
     color: Colors.muted,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   pillTextActive: {
     color: Colors.primary,
-    fontWeight: '700',
   },
   clearFilter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0, 229, 255, 0.08)',
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.secondary,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     marginBottom: 16,
   },
   clearFilterText: {
-    color: Colors.secondary,
+    color: Colors.primary,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
-
-  // Section
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 12,
-    marginTop: 4,
+    marginTop: 8,
   },
-
-  // Empty state
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: 40,
     gap: 10,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: Colors.muted,
-    textAlign: 'center',
-  },
-  emptyAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 6,
-  },
-  emptyActionText: {
-    color: '#000000',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-
-  // Expense card
-  expenseCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderLeftWidth: 3,
-    padding: 14,
-    marginBottom: 12,
-    gap: 12,
-  },
-  expenseIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  expenseInfo: { flex: 1 },
-  expenseTitle: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  expenseMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  categoryBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  expenseDate: {
-    color: Colors.muted,
-    fontSize: 11,
-  },
-  expenseRight: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  expenseAmount: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  expenseActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconBtn: {
-    padding: 4,
   },
 });

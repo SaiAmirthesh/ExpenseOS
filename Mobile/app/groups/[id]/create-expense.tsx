@@ -14,10 +14,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Check, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, AlertCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../../src/theme/theme';
+import { useTheme } from '../../../src/theme/ThemeContext';
 import { groupService } from '../../../src/services/groupService';
 import { expenseService } from '../../../src/services/expenseService';
 import { createExpenseSchema, CreateExpenseFields, ExpenseCategoryType, SplitTypeType } from '../../../src/features/expenses/schemas/expenseSchemas';
@@ -38,6 +39,8 @@ export default function CreateExpenseScreen() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
   const groupId = Number(id);
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
 
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategoryType>('FOOD');
   const [selectedSplitType, setSelectedSplitType] = useState<SplitTypeType>('EQUAL');
@@ -124,7 +127,6 @@ export default function CreateExpenseScreen() {
         };
       });
 
-      // Simple precision check (0.01 tolerance)
       if (Math.abs(sum - totalAmount) > 0.02) {
         setValidationError(`Sum of exact splits (₹${sum}) must equal the total amount (₹${totalAmount})`);
         return;
@@ -144,7 +146,6 @@ export default function CreateExpenseScreen() {
       const splits = members.map(m => {
         const pct = Number(memberInputs[m.id] || 0);
         sumPercentage += pct;
-        // Calculate amount for DTO validation
         const amt = (pct / 100) * totalAmount;
         return {
           userId: m.id,
@@ -171,43 +172,43 @@ export default function CreateExpenseScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         style={{ flex: 1 }}
       >
         {/* Header */}
-        <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-            <ArrowLeftIcon size={20} color="#FFFFFF" />
+            <ArrowLeftIcon size={20} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Expense</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Record Bill</Text>
           <View style={{ width: 32 }} />
         </View>
 
         {loadingMembers ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+          <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
-          <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             
             {validationError && (
-              <View style={styles.errorBanner}>
-                <AlertCircleIcon size={18} color={Colors.error} />
-                <Text style={styles.errorText}>{validationError}</Text>
+              <View style={[styles.errorBanner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+                <AlertCircleIcon size={18} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.error }]}>{validationError}</Text>
               </View>
             )}
 
             {/* General Info Card */}
-            <Card>
+            <Card style={styles.card}>
               <Controller
                 control={control}
                 name="title"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     label="Expense Title"
-                    placeholder="e.g. Dinner, Taxi, Airbnb"
+                    placeholder="e.g. Airbnb stay, Dinner, Rent"
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
@@ -237,11 +238,11 @@ export default function CreateExpenseScreen() {
                 name="description"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
-                    label="Description (Optional)"
-                    placeholder="Brief details"
+                    label="Description"
+                    placeholder="e.g. Paid by Sai"
                     onBlur={onBlur}
                     onChangeText={onChange}
-                    value={value}
+                    value={value || ''}
                     error={errors.description?.message}
                   />
                 )}
@@ -249,21 +250,23 @@ export default function CreateExpenseScreen() {
             </Card>
 
             {/* Category Selector Grid */}
-            <Text style={styles.sectionTitle}>Category</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Category</Text>
             <View style={styles.categoryGrid}>
               {CATEGORIES.map((cat) => (
                 <TouchableOpacity
                   key={cat}
                   style={[
                     styles.categoryItem,
-                    selectedCategory === cat && styles.categoryItemActive,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    selectedCategory === cat && { backgroundColor: colors.primary, borderColor: colors.primary },
                   ]}
                   onPress={() => setSelectedCategory(cat)}
                   activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.categoryText,
-                    selectedCategory === cat && styles.categoryTextActive,
+                    { color: colors.muted },
+                    selectedCategory === cat && { color: contrastIconColor },
                   ]}>
                     {cat}
                   </Text>
@@ -272,21 +275,22 @@ export default function CreateExpenseScreen() {
             </View>
 
             {/* Split Schema Selector */}
-            <Text style={styles.sectionTitle}>Split Schema</Text>
-            <View style={styles.splitSegmentContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Split Schema</Text>
+            <View style={[styles.splitSegmentContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {(['EQUAL', 'EXACT', 'PERCENTAGE'] as SplitTypeType[]).map((type) => (
                 <TouchableOpacity
                   key={type}
                   style={[
                     styles.splitSegmentButton,
-                    selectedSplitType === type && styles.splitSegmentButtonActive,
+                    selectedSplitType === type && [styles.splitSegmentButtonActive, { backgroundColor: colors.card, borderColor: colors.border }],
                   ]}
                   onPress={() => setSelectedSplitType(type)}
                   activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.splitSegmentText,
-                    selectedSplitType === type && styles.splitSegmentTextActive,
+                    { color: colors.muted },
+                    selectedSplitType === type && { color: colors.primary },
                   ]}>
                     {type}
                   </Text>
@@ -295,22 +299,22 @@ export default function CreateExpenseScreen() {
             </View>
 
             {/* Split Shares Editor */}
-            <Text style={styles.sectionTitle}>Splits Summary</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Splits Breakdown</Text>
             <Card>
               {selectedSplitType === 'EQUAL' && (
                 <View>
-                  <Text style={styles.splitsMeta}>
+                  <Text style={[styles.splitsMeta, { color: colors.muted }]}>
                     Amount will be split equally among all {members.length} group members.
                   </Text>
                   {watchAmount ? (
-                    <Text style={styles.splitsMetaHighlight}>
+                    <Text style={[styles.splitsMetaHighlight, { color: colors.primary }]}>
                       Each member pays: ₹{(Number(watchAmount) / members.length).toFixed(2)}
                     </Text>
                   ) : null}
                   {members.map((m) => (
-                    <View key={m.id} style={styles.memberSplitRow}>
-                      <Text style={styles.memberName}>{m.name}</Text>
-                      <Text style={styles.memberShare}>
+                    <View key={m.id} style={[styles.memberSplitRow, { borderBottomColor: colors.border }]}>
+                      <Text style={[styles.memberName, { color: colors.text }]}>{m.name}</Text>
+                      <Text style={[styles.memberShare, { color: colors.muted }]}>
                         {watchAmount ? `₹ ${(Number(watchAmount) / members.length).toFixed(2)}` : 'Equal Share'}
                       </Text>
                     </View>
@@ -320,12 +324,12 @@ export default function CreateExpenseScreen() {
 
               {selectedSplitType === 'EXACT' && (
                 <View>
-                  <Text style={styles.splitsMeta}>
+                  <Text style={[styles.splitsMeta, { color: colors.muted }]}>
                     Specify the exact rupee amount each member owes.
                   </Text>
                   {members.map((m) => (
                     <View key={m.id} style={styles.memberInputRow}>
-                      <Text style={styles.memberName}>{m.name}</Text>
+                      <Text style={[styles.memberName, { color: colors.text }]}>{m.name}</Text>
                       <View style={styles.amountInputWrap}>
                         <Input
                           placeholder="₹ 0.00"
@@ -342,12 +346,12 @@ export default function CreateExpenseScreen() {
 
               {selectedSplitType === 'PERCENTAGE' && (
                 <View>
-                  <Text style={styles.splitsMeta}>
+                  <Text style={[styles.splitsMeta, { color: colors.muted }]}>
                     Specify the percentage (%) share each member owes (must sum to 100%).
                   </Text>
                   {members.map((m) => (
                     <View key={m.id} style={styles.memberInputRow}>
-                      <Text style={styles.memberName}>{m.name}</Text>
+                      <Text style={[styles.memberName, { color: colors.text }]}>{m.name}</Text>
                       <View style={styles.pctInputWrap}>
                         <Input
                           placeholder="0 %"
@@ -396,8 +400,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   loaderContainer: {
@@ -411,28 +415,34 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
   },
+  card: {
+    padding: 16,
+  },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.error,
-    borderRadius: 8,
+    borderColor: 'rgba(255, 107, 107, 0.15)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 20,
   },
   errorText: {
     flex: 1,
     color: Colors.error,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 12,
-    marginTop: 8,
+    marginTop: 14,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -443,7 +453,7 @@ const styles = StyleSheet.create({
   categoryItem: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: 12,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -455,7 +465,7 @@ const styles = StyleSheet.create({
   categoryText: {
     color: Colors.muted,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   categoryTextActive: {
     color: '#000000',
@@ -463,7 +473,7 @@ const styles = StyleSheet.create({
   splitSegmentContainer: {
     flexDirection: 'row',
     backgroundColor: Colors.surface,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: 4,
@@ -473,7 +483,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 12,
   },
   splitSegmentButtonActive: {
     backgroundColor: Colors.card,
@@ -483,7 +493,7 @@ const styles = StyleSheet.create({
   splitSegmentText: {
     color: Colors.muted,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   splitSegmentTextActive: {
     color: Colors.primary,
@@ -491,29 +501,32 @@ const styles = StyleSheet.create({
   splitsMeta: {
     color: Colors.muted,
     fontSize: 13,
+    fontFamily: 'Inter-Regular',
     marginBottom: 12,
+    lineHeight: 18,
   },
   splitsMetaHighlight: {
     color: Colors.primary,
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     marginBottom: 16,
   },
   memberSplitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   memberName: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   memberShare: {
     color: Colors.muted,
     fontSize: 14,
+    fontFamily: 'Inter-Regular',
   },
   memberInputRow: {
     flexDirection: 'row',
@@ -529,8 +542,7 @@ const styles = StyleSheet.create({
   },
   inputOverride: {
     marginBottom: 0,
-    height: 40,
-    textAlign: 'right',
+    height: 44,
   },
   saveBtn: {
     marginTop: 24,

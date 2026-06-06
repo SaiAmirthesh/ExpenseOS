@@ -8,6 +8,7 @@ import {
   TouchableOpacity 
 } from 'react-native';
 import { Colors } from '../../theme/theme';
+import { useTheme } from '../../theme/ThemeContext';
 import { Eye, EyeOff } from 'lucide-react-native';
 
 const EyeIcon = Eye as any;
@@ -28,6 +29,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(!secureTextEntry);
+  const { colors } = useTheme();
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -39,12 +41,12 @@ export const Input: React.FC<InputProps> = ({
       <View 
         style={[
           styles.inputContainer,
-          isFocused && styles.focusedBorder,
+          isFocused && { borderColor: colors.primary },
           error ? styles.errorBorder : null,
         ]}
       >
         <TextInput
-          placeholderTextColor="#666"
+          placeholderTextColor="#667085"
           secureTextEntry={secureTextEntry && !isPasswordVisible}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -76,23 +78,25 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: '500',
+    color: Colors.muted,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 8,
   },
   inputContainer: {
-    height: 50,
+    height: 52,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
+    borderRadius: 16, // Rounded corner style
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
   focusedBorder: {
-    borderColor: Colors.primary,
+    // Dynamic border color is applied inline
   },
   errorBorder: {
     borderColor: Colors.error,
@@ -101,7 +105,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     color: Colors.text,
-    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    fontSize: 15,
   },
   eyeButton: {
     padding: 8,
@@ -109,6 +114,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: Colors.error,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginTop: 6,
   },
 });

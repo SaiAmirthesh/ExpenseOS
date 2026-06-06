@@ -14,11 +14,29 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, UserPlus, Trash, Shield, Plus, DollarSign, Wallet, LogOut } from 'lucide-react-native';
+import { 
+  ArrowLeft, 
+  UserPlus, 
+  Trash, 
+  Shield, 
+  Plus, 
+  Wallet, 
+  LogOut,
+  Utensils,
+  Plane,
+  ShoppingCart,
+  Home,
+  Gamepad2,
+  Lightbulb,
+  HeartPulse,
+  Package,
+  X
+} from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../src/store/authContext';
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { groupService } from '../../src/services/groupService';
 import { invitationService } from '../../src/services/invitationService';
 import { expenseService } from '../../src/services/expenseService';
@@ -26,15 +44,40 @@ import { inviteMemberSchema, InviteMemberFields } from '../../src/features/group
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
 import { Card } from '../../src/components/common/Card';
+import { Avatar } from '../../src/components/common/Avatar';
+import { ExpenseCard } from '../../src/components/common/ExpenseCard';
+import { Badge } from '../../src/components/common/Badge';
 
 const ArrowLeftIcon = ArrowLeft as any;
 const UserPlusIcon = UserPlus as any;
 const TrashIcon = Trash as any;
 const ShieldIcon = Shield as any;
 const PlusIcon = Plus as any;
-const DollarSignIcon = DollarSign as any;
 const WalletIcon = Wallet as any;
 const LogOutIcon = LogOut as any;
+const XIcon = X as any;
+
+const CATEGORY_ICON_MAP: Record<string, any> = {
+  FOOD: Utensils,
+  TRAVEL: Plane,
+  SHOPPING: ShoppingCart,
+  RENT: Home,
+  ENTERTAINMENT: Gamepad2,
+  UTILITIES: Lightbulb,
+  HEALTH: HeartPulse,
+  OTHER: Package,
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  FOOD: '#FF6B6B',
+  TRAVEL: '#D7FF3F',
+  SHOPPING: '#FFE66D',
+  RENT: '#A855F7',
+  ENTERTAINMENT: '#4ECDC4',
+  UTILITIES: '#FF9500',
+  HEALTH: '#FF6B6B',
+  OTHER: '#B4BCD0',
+};
 
 export default function GroupDetailsScreen() {
   const router = useRouter();
@@ -42,6 +85,8 @@ export default function GroupDetailsScreen() {
   const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
   const groupId = Number(id);
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
 
   const [activeTab, setActiveTab] = useState<'EXPENSES' | 'MEMBERS'>('EXPENSES');
   const [inviteError, setInviteError] = useState<string | null>(null);
@@ -151,22 +196,22 @@ export default function GroupDetailsScreen() {
 
   if (isNaN(groupId)) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Invalid Group ID</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>Invalid Group ID</Text>
         <Button title="Go Back" onPress={() => router.back()} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {group?.name || 'Group Details'}
+        <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+          {group?.name || 'Group Vault'}
         </Text>
         {/* Only show delete button to the group creator */}
         {group?.createdBy === user.email && (
@@ -190,9 +235,9 @@ export default function GroupDetailsScreen() {
             activeOpacity={0.7}
           >
             {deleteGroupMutation.isPending ? (
-              <ActivityIndicator size="small" color={Colors.error} />
+              <ActivityIndicator size="small" color={colors.error} />
             ) : (
-              <TrashIcon size={20} color={Colors.error} />
+              <TrashIcon size={20} color={colors.error} />
             )}
           </TouchableOpacity>
         )}
@@ -218,71 +263,72 @@ export default function GroupDetailsScreen() {
             activeOpacity={0.7}
           >
             {leaveGroupMutation.isPending ? (
-              <ActivityIndicator size="small" color={Colors.warning} />
+              <ActivityIndicator size="small" color={colors.warning} />
             ) : (
-              <LogOutIcon size={20} color={Colors.warning} />
+              <LogOutIcon size={20} color={colors.warning} />
             )}
           </TouchableOpacity>
         )}
       </View>
 
       {isLoading && !refreshing ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView 
             style={styles.container} 
             contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={Colors.primary}
-                colors={[Colors.primary]}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
               />
             }
           >
             {/* Metadata info */}
-            <Card style={styles.metaCard}>
+            <Card style={[styles.metaCard, { borderLeftColor: colors.primary }]} delay={50}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.groupTitle}>{group?.name}</Text>
-                  <Text style={styles.groupDesc}>{group?.description || 'No description provided'}</Text>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={[styles.groupTitle, { color: colors.text }]}>{group?.name}</Text>
+                  <Text style={[styles.groupDesc, { color: colors.muted }]}>{group?.description || 'No description provided'}</Text>
                 </View>
                 <TouchableOpacity 
-                  style={styles.settlementsNavBtn}
+                  style={[styles.settlementsNavBtn, { backgroundColor: colors.primary }]}
                   onPress={() => router.push(`/groups/${groupId}/settlements`)}
-                  activeOpacity={0.7}
+                  activeOpacity={0.75}
                 >
-                  <WalletIcon size={14} color="#000000" />
-                  <Text style={styles.settlementsNavBtnText}>Settlements</Text>
+                  <WalletIcon size={14} color={contrastIconColor} />
+                  <Text style={[styles.settlementsNavBtnText, { color: contrastIconColor }]}>Settle Up</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.ownerBadge}>
-                <ShieldIcon size={12} color={Colors.secondary} />
-                <Text style={styles.ownerText}>Owner: {group?.createdBy}</Text>
+                <ShieldIcon size={12} color={colors.primary} />
+                <Text style={[styles.ownerText, { color: colors.primary }]}>Owner: {group?.createdBy}</Text>
               </View>
             </Card>
 
             {/* Segment Tab Controls */}
-            <View style={styles.tabsContainer}>
+            <View style={[styles.tabsContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <TouchableOpacity
-                style={[styles.tabButton, activeTab === 'EXPENSES' && styles.tabButtonActive]}
+                style={[styles.tabButton, activeTab === 'EXPENSES' && [styles.tabButtonActive, { backgroundColor: colors.card, borderColor: colors.border }]]}
                 onPress={() => setActiveTab('EXPENSES')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.tabText, activeTab === 'EXPENSES' && styles.tabTextActive]}>
-                  Expenses
+                <Text style={[styles.tabText, { color: colors.muted }, activeTab === 'EXPENSES' && { color: colors.primary }]}>
+                  Bills & Expenses
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.tabButton, activeTab === 'MEMBERS' && styles.tabButtonActive]}
+                style={[styles.tabButton, activeTab === 'MEMBERS' && [styles.tabButtonActive, { backgroundColor: colors.card, borderColor: colors.border }]]}
                 onPress={() => setActiveTab('MEMBERS')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.tabText, activeTab === 'MEMBERS' && styles.tabTextActive]}>
+                <Text style={[styles.tabText, { color: colors.muted }, activeTab === 'MEMBERS' && { color: colors.primary }]}>
                   Members ({members.length})
                 </Text>
               </TouchableOpacity>
@@ -292,52 +338,56 @@ export default function GroupDetailsScreen() {
             {activeTab === 'EXPENSES' ? (
               <View>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Group Bills</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Shared Ledger</Text>
                   <TouchableOpacity 
-                    style={styles.inlineAddBtn}
+                    style={[styles.inlineAddBtn, { backgroundColor: colors.primary }]}
                     onPress={() => router.push(`/groups/${groupId}/create-expense`)}
-                    activeOpacity={0.7}
+                    activeOpacity={0.75}
                   >
-                    <PlusIcon size={16} color="#000000" />
-                    <Text style={styles.inlineAddBtnText}>Add Bill</Text>
+                    <PlusIcon size={16} color={contrastIconColor} />
+                    <Text style={[styles.inlineAddBtnText, { color: contrastIconColor }]}>Add Bill</Text>
                   </TouchableOpacity>
                 </View>
 
                 {expenses.length === 0 ? (
                   <Card style={styles.emptyCard}>
-                    <Text style={styles.emptyText}>No bills recorded yet</Text>
-                    <Text style={styles.emptySubtext}>Split your first bill by tapping the "Add Bill" button above.</Text>
+                    <Text style={[styles.emptyText, { color: colors.text }]}>No bills recorded yet</Text>
+                    <Text style={[styles.emptySubtext, { color: colors.muted }]}>Split your first bill by tapping the "Add Bill" button above.</Text>
                   </Card>
                 ) : (
-                  expenses.map((expense) => (
-                    <Card key={expense.id} style={styles.expenseCard}>
-                      <View style={styles.expenseInfo}>
-                        <Text style={styles.expenseTitle}>{expense.title}</Text>
-                        <Text style={styles.expenseMeta}>
-                          Paid by {expense.paidByName} • {expense.category}
-                        </Text>
-                      </View>
-                      <View style={styles.expenseValueWrap}>
-                        <Text style={styles.expenseAmount}>₹{expense.amount.toLocaleString()}</Text>
-                        <Text style={styles.expenseSplitType}>{expense.splitType} SPLIT</Text>
-                      </View>
-                    </Card>
-                  ))
+                  expenses.map((expense, idx) => {
+                    const cat = expense.category || 'OTHER';
+                    const color = CATEGORY_COLORS[cat] || colors.primary;
+                    const CatIcon = CATEGORY_ICON_MAP[cat] || Package;
+                    return (
+                      <ExpenseCard
+                        key={expense.id}
+                        title={expense.title}
+                        amount={expense.amount}
+                        category={cat}
+                        categoryColor={color}
+                        categoryIcon={<CatIcon size={18} color={color} />}
+                        paidByText={`Paid by ${expense.paidByName}`}
+                        splitText={`${expense.splitType} SPLIT`}
+                        delay={100 + idx * 40}
+                      />
+                    );
+                  })
                 )}
               </View>
             ) : (
               <View>
                 {/* Invite Member Section */}
-                <Text style={styles.sectionTitle}>Invite Member</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Invite Member</Text>
                 <Card style={styles.formCard}>
                   {inviteError && (
-                    <View style={[styles.banner, styles.errorBanner]}>
-                      <Text style={styles.errorText}>{inviteError}</Text>
+                    <View style={[styles.banner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+                      <Text style={[styles.errorBannerText, { color: colors.error }]}>{inviteError}</Text>
                     </View>
                   )}
                   {inviteSuccess && (
-                    <View style={[styles.banner, styles.successBanner]}>
-                      <Text style={styles.successText}>{inviteSuccess}</Text>
+                    <View style={[styles.banner, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '25' }]}>
+                      <Text style={[styles.successBannerText, { color: colors.primary }]}>{inviteSuccess}</Text>
                     </View>
                   )}
                   
@@ -361,53 +411,51 @@ export default function GroupDetailsScreen() {
                       />
                     </View>
                     <TouchableOpacity 
-                      style={styles.inviteSubmitBtn}
+                      style={[styles.inviteSubmitBtn, { backgroundColor: colors.primary }]}
                       onPress={handleSubmit(onInvite)}
                       disabled={inviteMutation.isPending}
                       activeOpacity={0.7}
                     >
                       {inviteMutation.isPending ? (
-                        <ActivityIndicator color="#000000" size="small" />
+                        <ActivityIndicator color={contrastIconColor} size="small" />
                       ) : (
-                        <UserPlusIcon size={20} color="#000000" />
+                        <UserPlusIcon size={20} color={contrastIconColor} />
                       )}
                     </TouchableOpacity>
                   </View>
                 </Card>
 
                 {/* Members List */}
-                <Text style={styles.sectionTitle}>Active Members</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Active Members</Text>
                 {members.map((member) => (
                   <Card key={member.id} style={styles.memberCard}>
-                    <View style={styles.memberAvatar}>
-                      <Text style={styles.memberAvatarText}>
-                        {member.name.substring(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
+                    <Avatar name={member.name} size={36} style={styles.memberAvatar} />
                     <View style={styles.memberInfo}>
-                      <Text style={styles.memberName}>{member.name}</Text>
-                      <Text style={styles.memberEmail}>{member.email}</Text>
+                      <Text style={[styles.memberName, { color: colors.text }]}>{member.name}</Text>
+                      <Text style={[styles.memberEmail, { color: colors.muted }]}>{member.email}</Text>
                     </View>
-                    <TouchableOpacity 
-                      onPress={() => {
-                        Alert.alert(
-                          'Remove Member',
-                          `Remove ${member.name} from this group?`,
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Remove',
-                              style: 'destructive',
-                              onPress: () => removeMemberMutation.mutate(member.id),
-                            },
-                          ]
-                        );
-                      }}
-                      disabled={removeMemberMutation.isPending}
-                      activeOpacity={0.7}
-                    >
-                      <XIcon size={16} color={Colors.muted} />
-                    </TouchableOpacity>
+                    {group?.createdBy === user.email && member.email !== user.email && (
+                      <TouchableOpacity 
+                        onPress={() => {
+                          Alert.alert(
+                            'Remove Member',
+                            `Remove ${member.name} from this group?`,
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Remove',
+                                style: 'destructive',
+                                onPress: () => removeMemberMutation.mutate(member.id),
+                              },
+                            ]
+                          );
+                        }}
+                        disabled={removeMemberMutation.isPending}
+                        activeOpacity={0.7}
+                      >
+                        <XIcon size={16} color={colors.error} />
+                      </TouchableOpacity>
+                    )}
                   </Card>
                 ))}
               </View>
@@ -420,12 +468,6 @@ export default function GroupDetailsScreen() {
     </SafeAreaView>
   );
 }
-
-// X icon proxy for internal use
-const XIcon = ({ size, color }: { size: number; color: string }) => {
-  const Icon = require('lucide-react-native').X as any;
-  return <Icon size={size} color={color} />;
-};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -446,8 +488,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
     textAlign: 'center',
     marginHorizontal: 16,
@@ -468,31 +510,32 @@ const styles = StyleSheet.create({
   },
   metaCard: {
     borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
+    borderLeftColor: Colors.primary,
     marginBottom: 20,
   },
   settlementsNavBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.secondary,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     alignSelf: 'flex-start',
   },
   settlementsNavBtnText: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#000000',
   },
   groupTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   groupDesc: {
     fontSize: 14,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
     marginTop: 6,
     lineHeight: 20,
@@ -505,23 +548,23 @@ const styles = StyleSheet.create({
   },
   ownerText: {
     fontSize: 12,
-    color: Colors.secondary,
-    fontWeight: '500',
+    color: Colors.primary,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: Colors.surface,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: 4,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   tabButton: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 12,
   },
   tabButtonActive: {
     backgroundColor: Colors.card,
@@ -531,7 +574,7 @@ const styles = StyleSheet.create({
   tabText: {
     color: Colors.muted,
     fontSize: 13,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   tabTextActive: {
     color: Colors.primary,
@@ -543,9 +586,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    marginTop: 4,
   },
   inlineAddBtn: {
     flexDirection: 'row',
@@ -554,92 +601,60 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 10,
   },
   inlineAddBtnText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#000000',
   },
   emptyCard: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
+    borderRadius: 20,
   },
   emptyText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   emptySubtext: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
     marginTop: 6,
     paddingHorizontal: 16,
   },
-  expenseCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
-  },
-  expenseInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  expenseTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  expenseMeta: {
-    color: Colors.muted,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  expenseValueWrap: {
-    alignItems: 'flex-end',
-  },
-  expenseAmount: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  expenseSplitType: {
-    fontSize: 9,
-    color: Colors.muted,
-    fontWeight: '900',
-    marginTop: 4,
-    letterSpacing: 0.5,
-  },
   formCard: {
     padding: 16,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   banner: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 14,
   },
   errorBanner: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    borderColor: Colors.error,
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
+    borderColor: 'rgba(255, 107, 107, 0.15)',
   },
   successBanner: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    borderColor: Colors.success,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
+    borderColor: 'rgba(215, 255, 63, 0.15)',
   },
-  errorText: {
+  errorBannerText: {
     color: Colors.error,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
-  successText: {
-    color: Colors.success,
-    fontSize: 14,
+  successBannerText: {
+    color: Colors.primary,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
   inviteFormRow: {
@@ -651,9 +666,9 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   inviteSubmitBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 8,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -661,36 +676,25 @@ const styles = StyleSheet.create({
   memberCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 14,
     marginBottom: 10,
+    borderRadius: 16,
   },
   memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  memberAvatarText: {
-    color: Colors.secondary,
-    fontWeight: 'bold',
-    fontSize: 13,
+    marginRight: 12,
   },
   memberInfo: {
     flex: 1,
-    marginLeft: 12,
   },
   memberName: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   memberEmail: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginTop: 2,
   },
   errorContainer: {
@@ -700,5 +704,10 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: Colors.background,
     gap: 16,
+  },
+  errorText: {
+    color: Colors.error,
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans-Bold',
   },
 });

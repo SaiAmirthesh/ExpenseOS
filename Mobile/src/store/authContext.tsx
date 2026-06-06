@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User;
   login: (accessToken: string, refreshToken: string, user: { id: string; name: string; email: string }) => void;
   logout: () => void;
+  updateUser: (userDetails: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,8 +67,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryClient.clear();
   };
 
+  const updateUser = (userDetails: Partial<User>) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...userDetails };
+      if (userDetails.name !== undefined) {
+        if (userDetails.name === null) {
+          removeStorageItem(StorageKeys.USER_NAME);
+        } else {
+          setStorageItem(StorageKeys.USER_NAME, userDetails.name);
+        }
+      }
+      if (userDetails.email !== undefined) {
+        if (userDetails.email === null) {
+          removeStorageItem(StorageKeys.USER_EMAIL);
+        } else {
+          setStorageItem(StorageKeys.USER_EMAIL, userDetails.email);
+        }
+      }
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

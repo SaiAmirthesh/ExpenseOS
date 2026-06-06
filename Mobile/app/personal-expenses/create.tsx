@@ -27,6 +27,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import {
   personalExpenseService,
   PersonalExpenseCategory,
@@ -38,6 +39,7 @@ import {
 } from '../../src/features/personal-expenses/schemas/personalExpenseSchema';
 import { Input } from '../../src/components/common/Input';
 import { Button } from '../../src/components/common/Button';
+import { Card } from '../../src/components/common/Card';
 
 const ArrowLeftIcon = ArrowLeft as any;
 const UtensilsIcon = Utensils as any;
@@ -67,23 +69,23 @@ const CATEGORY_COLORS: Record<PersonalExpenseCategory, string> = {
   TRANSPORT: '#4ECDC4',
   SHOPPING: '#FFE66D',
   ENTERTAINMENT: '#A855F7',
-  HEALTH: '#34C759',
+  HEALTH: '#D7FF3F',
   EDUCATION: '#00E5FF',
   BILLS: '#FF9500',
-  TRAVEL: '#39FF14',
-  OTHER: '#A0A0A0',
+  TRAVEL: '#D7FF3F',
+  OTHER: '#B4BCD0',
 };
 
 const CATEGORY_LABELS: Record<PersonalExpenseCategory, string> = {
-  FOOD: 'Food',
+  FOOD: 'Food & Dining',
   TRANSPORT: 'Transport',
   SHOPPING: 'Shopping',
   ENTERTAINMENT: 'Entertainment',
-  HEALTH: 'Health',
+  HEALTH: 'Health & Medical',
   EDUCATION: 'Education',
-  BILLS: 'Bills',
+  BILLS: 'Bills & Utilities',
   TRAVEL: 'Travel',
-  OTHER: 'Other',
+  OTHER: 'Other Costs',
 };
 
 function getTodayDate(): string {
@@ -98,6 +100,8 @@ export default function CreateEditPersonalExpenseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEditMode = !!id;
 
@@ -166,32 +170,32 @@ export default function CreateEditPersonalExpenseScreen() {
 
   if (isEditMode && loadingExisting) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEditMode ? 'Edit Expense' : 'New Expense'}
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          {isEditMode ? 'Edit Transaction' : 'Record Transaction'}
         </Text>
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Error banner */}
         {mutationError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>
+          <View style={[styles.errorBanner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>
               {(mutationError as any)?.response?.data?.message ||
                 'Something went wrong. Please try again.'}
             </Text>
@@ -199,7 +203,7 @@ export default function CreateEditPersonalExpenseScreen() {
         )}
 
         {/* Category Picker */}
-        <Text style={styles.sectionLabel}>Category</Text>
+        <Text style={[styles.sectionLabel, { color: colors.muted }]}>Select Category</Text>
         <Controller
           control={control}
           name="category"
@@ -215,9 +219,10 @@ export default function CreateEditPersonalExpenseScreen() {
                       key={cat}
                       style={[
                         styles.categoryChip,
+                        { backgroundColor: colors.card, borderColor: colors.border },
                         isSelected && {
                           borderColor: color,
-                          backgroundColor: `${color}18`,
+                          backgroundColor: `${color}10`,
                         },
                       ]}
                       onPress={() => onChange(cat)}
@@ -226,14 +231,15 @@ export default function CreateEditPersonalExpenseScreen() {
                       <View
                         style={[
                           styles.chipIconBox,
-                          { backgroundColor: isSelected ? `${color}25` : Colors.surface },
+                          { backgroundColor: isSelected ? `${color}20` : colors.surface },
                         ]}
                       >
-                        <CatIcon size={18} color={isSelected ? color : Colors.muted} />
+                        <CatIcon size={16} color={isSelected ? color : colors.muted} />
                       </View>
                       <Text
                         style={[
                           styles.categoryChipText,
+                          { color: colors.muted },
                           isSelected && { color, fontWeight: '700' },
                         ]}
                       >
@@ -244,7 +250,7 @@ export default function CreateEditPersonalExpenseScreen() {
                 })}
               </View>
               {errors.category && (
-                <Text style={styles.fieldError}>{errors.category.message}</Text>
+                <Text style={[styles.fieldError, { color: colors.error }]}>{errors.category.message}</Text>
               )}
             </View>
           )}
@@ -255,7 +261,7 @@ export default function CreateEditPersonalExpenseScreen() {
           <View
             style={[
               styles.previewBanner,
-              { borderLeftColor: CATEGORY_COLORS[selectedCategory] },
+              { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: CATEGORY_COLORS[selectedCategory] },
             ]}
           >
             {(() => {
@@ -265,7 +271,7 @@ export default function CreateEditPersonalExpenseScreen() {
               );
             })()}
             <View>
-              <Text style={styles.previewLabel}>Selected</Text>
+              <Text style={[styles.previewLabel, { color: colors.muted }]}>Active Segment</Text>
               <Text
                 style={[
                   styles.previewCategory,
@@ -278,73 +284,72 @@ export default function CreateEditPersonalExpenseScreen() {
           </View>
         )}
 
-        {/* Title */}
-        <Controller
-          control={control}
-          name="title"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Expense Title"
-              placeholder="e.g. Lunch, Petrol, Netflix"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              error={errors.title?.message}
-            />
-          )}
-        />
+        {/* Form Details Card */}
+        <Card style={styles.formCard}>
+          <Controller
+            control={control}
+            name="title"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Transaction Title"
+                placeholder="e.g. Uber Ride, Swiggy, Netflix"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                error={errors.title?.message}
+              />
+            )}
+          />
 
-        {/* Amount */}
-        <Controller
-          control={control}
-          name="amount"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Amount (₹)"
-              placeholder="0.00"
-              keyboardType="numeric"
-              onBlur={onBlur}
-              onChangeText={(text) => onChange(text ? Number(text) : undefined)}
-              value={value !== undefined ? String(value) : ''}
-              error={errors.amount?.message}
-            />
-          )}
-        />
+          <Controller
+            control={control}
+            name="amount"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Rupee Amount (₹)"
+                placeholder="0.00"
+                keyboardType="numeric"
+                onBlur={onBlur}
+                onChangeText={(text) => onChange(text ? Number(text) : undefined)}
+                value={value !== undefined ? String(value) : ''}
+                error={errors.amount?.message}
+              />
+            )}
+          />
 
-        {/* Date */}
-        <Controller
-          control={control}
-          name="expenseDate"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Date (YYYY-MM-DD)"
-              placeholder={getTodayDate()}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              error={errors.expenseDate?.message}
-            />
-          )}
-        />
+          <Controller
+            control={control}
+            name="expenseDate"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Date (YYYY-MM-DD)"
+                placeholder={getTodayDate()}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+                error={errors.expenseDate?.message}
+              />
+            )}
+          />
 
-        {/* Description */}
-        <Controller
-          control={control}
-          name="description"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Note (optional)"
-              placeholder="Add a note..."
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value || ''}
-              error={errors.description?.message}
-            />
-          )}
-        />
+          <Controller
+            control={control}
+            name="description"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="Transaction Reference Note"
+                placeholder="Add reference notes (optional)..."
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value || ''}
+                error={errors.description?.message}
+              />
+            )}
+          />
+        </Card>
 
         <Button
-          title={isEditMode ? 'Save Changes' : 'Add Expense'}
+          title={isEditMode ? 'Apply Modifications' : 'Log Transaction'}
           onPress={handleSubmit(onSubmit)}
           isLoading={isMutating}
           style={styles.submitBtn}
@@ -377,37 +382,35 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 6 },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   headerRight: { width: 32 },
   container: { flex: 1 },
   content: { padding: 24 },
-
   errorBanner: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.error,
-    borderRadius: 8,
+    borderColor: 'rgba(255, 107, 107, 0.15)',
+    borderRadius: 12,
     padding: 12,
     marginBottom: 20,
   },
   errorText: {
     color: Colors.error,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
   },
-
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 12,
   },
-
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -420,39 +423,39 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    minWidth: '44%',
+    minWidth: '46%',
     flex: 1,
   },
   chipIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   categoryChipText: {
     fontSize: 13,
     color: Colors.muted,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans-SemiBold',
     flexShrink: 1,
   },
   fieldError: {
     color: Colors.error,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginTop: -8,
     marginBottom: 12,
   },
-
   previewBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     backgroundColor: Colors.card,
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 20,
     borderWidth: 1,
@@ -460,17 +463,21 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
   },
   previewLabel: {
-    fontSize: 11,
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   previewCategory: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Bold',
     marginTop: 2,
   },
-
+  formCard: {
+    padding: 18,
+    marginBottom: 20,
+  },
   submitBtn: {
     marginTop: 8,
   },

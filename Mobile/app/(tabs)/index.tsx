@@ -6,15 +6,15 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  SafeAreaView
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LogOut, Users, ArrowUpRight, ArrowDownLeft, Wallet, Bell } from 'lucide-react-native';
+import { LogOut, Users, ArrowUpRight, ArrowDownLeft, Wallet, Bell, Sparkles } from 'lucide-react-native';
 
 import { useAuth } from '../../src/store/authContext';
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { groupService } from '../../src/services/groupService';
 import { balanceService } from '../../src/services/balanceService';
 import { invitationService } from '../../src/services/invitationService';
@@ -22,6 +22,9 @@ import { personalExpenseService } from '../../src/services/personalExpenseServic
 import { settlementService } from '../../src/services/settlementService';
 import { Card } from '../../src/components/common/Card';
 import { Skeleton } from '../../src/components/common/Skeleton';
+import { Avatar } from '../../src/components/common/Avatar';
+import { StatCard } from '../../src/components/common/StatCard';
+import { GroupCard } from '../../src/components/common/GroupCard';
 
 // Cast icons to avoid React 19 typing issues
 const LogOutIcon = LogOut as any;
@@ -30,11 +33,13 @@ const ArrowUpRightIcon = ArrowUpRight as any;
 const ArrowDownLeftIcon = ArrowDownLeft as any;
 const WalletIcon = Wallet as any;
 const BellIcon = Bell as any;
+const SparklesIcon = Sparkles as any;
 
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   // Queries
@@ -74,10 +79,6 @@ export default function DashboardScreen() {
     queryFn: settlementService.getPendingSettlements,
   });
 
-  // Dynamically fetch balances for all groups to aggregate Owe / Owed totals
-  // Since we cannot run dynamic hooks in loops, we do client-side query or trigger resolution
-  // For the dashboard bento grid, we will retrieve balances for each group. 
-  // To keep it simple and elegant, we can fetch all balances with a Promise.all in a query
   const {
     data: globalBalances = { owedToYou: 0, youOwe: 0 },
     isLoading: loadingBalances,
@@ -91,13 +92,12 @@ export default function DashboardScreen() {
 
       const balancePromises = groups.map(group =>
         balanceService.getBalances(group.id)
-          .catch(() => []) // Catch errors per-group to avoid complete failure
+          .catch(() => [])
       );
 
       const allGroupBalances = await Promise.all(balancePromises);
 
       allGroupBalances.forEach(groupBalances => {
-        // Find user balance record. Matches by email or name
         const myBalance = groupBalances.find(b =>
           b.name.toLowerCase() === user.name?.toLowerCase() ||
           b.userId.toString() === user.id
@@ -139,182 +139,199 @@ export default function DashboardScreen() {
   const totalNotifications = pendingInvitations.length + pendingSettlements.length;
   const isLoadingAny = loadingPersonal || loadingGroups || loadingInvitations || loadingSettlements || (groups.length > 0 && loadingBalances);
 
+  const greeting = useMemo(() => {
+    const hours = new Date().getHours();
+    if (hours < 12) return 'Good Morning';
+    if (hours < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }, []);
+
+  const firstFirstName = user?.name ? user.name.split(' ')[0] : 'Sai';
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
+
   return (
-    <View style={[styles.safeArea, { paddingTop: Math.max(insets.top, 16) }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16) }]}>
+      {/* Header Greeting Bar */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Avatar name={user.name || 'Sai'} size={40} style={styles.headerAvatar} />
+          <View>
+            <Text style={[styles.welcome, { color: colors.muted }]}>{greeting},</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{firstFirstName}</Text>
+          </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[styles.bellButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => router.push('/notifications')}
+            activeOpacity={0.7}
+          >
+            <BellIcon size={20} color={totalNotifications > 0 ? colors.primary : colors.muted} />
+            {totalNotifications > 0 && (
+              <View style={[styles.notificationDot, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.dotText, { color: colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF' }]}>{totalNotifications}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.logoutButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={logout}
+            activeOpacity={0.7}
+          >
+            <LogOutIcon size={20} color={colors.muted} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.userName}>{user.name || 'Premium User'}</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={styles.bellButton}
-              onPress={() => router.push('/notifications')}
-              activeOpacity={0.7}
-            >
-              <BellIcon size={20} color={totalNotifications > 0 ? Colors.secondary : Colors.muted} />
-              {totalNotifications > 0 && (
-                <View style={styles.notificationDot}>
-                  <Text style={styles.dotText}>{totalNotifications}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={logout}
-              activeOpacity={0.7}
-            >
-              <LogOutIcon size={20} color={Colors.muted} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Pending Invitations/Notifications Alert */}
+        {/* Alerts Banner */}
         {totalNotifications > 0 && (
           <TouchableOpacity
-            style={styles.invitationBanner}
+            style={[styles.invitationBanner, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
             onPress={() => router.push('/notifications')}
             activeOpacity={0.9}
           >
-            <Text style={styles.invitationText}>
-              You have {totalNotifications} new notification{totalNotifications > 1 ? 's' : ''}!
+            <SparklesIcon size={16} color={colors.primary} />
+            <Text style={[styles.invitationText, { color: colors.primary }]}>
+              You have {totalNotifications} pending approval{totalNotifications > 1 ? 's' : ''}!
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* Bento Grid */}
-        <Text style={styles.sectionTitle}>Overview</Text>
+        {/* Bento Grid layout */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Financial Vault Overview</Text>
 
         {isLoadingAny ? (
           <View style={styles.bentoGrid}>
-            <Skeleton height={140} style={styles.bentoFull} />
-            <Skeleton height={100} style={styles.bentoHalf} />
-            <Skeleton height={100} style={styles.bentoHalf} />
-            <Skeleton height={120} style={styles.bentoFull} />
+            <Skeleton height={140} style={[styles.bentoFull, { borderRadius: 20, marginBottom: 12 }]} />
+            <View style={styles.bentoRow}>
+              <Skeleton height={100} style={[styles.bentoHalf, { borderRadius: 20 }]} />
+              <Skeleton height={100} style={[styles.bentoHalf, { borderRadius: 20 }]} />
+            </View>
+            <Skeleton height={100} style={[styles.bentoFull, { borderRadius: 20, marginTop: 12 }]} />
           </View>
         ) : (
           <View style={styles.bentoGrid}>
             {/* Main Personal Spend Card */}
             <TouchableOpacity
-              style={styles.bentoFull}
+              style={[styles.bentoFull, { marginBottom: 12 }]}
               onPress={() => router.push('/personal-expenses')}
               activeOpacity={0.8}
             >
-              <Card style={[styles.mainCard, styles.bentoFull]}>
+              <Card style={[styles.mainCard, { borderLeftColor: colors.primary }]} delay={50}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardLabel}>Personal Spending</Text>
-                  <WalletIcon size={18} color={Colors.primary} />
+                  <Text style={[styles.cardLabel, { color: colors.muted }]}>Personal Spending</Text>
+                  <WalletIcon size={18} color={colors.primary} />
                 </View>
-                <Text style={styles.cardValue}>₹{totalPersonalSpend.toLocaleString()}</Text>
-                <Text style={styles.cardSubtext}>Tap to manage individual expenses</Text>
+                <Text style={[styles.cardValue, { color: colors.text }]}>₹{totalPersonalSpend.toLocaleString()}</Text>
+                <Text style={[styles.cardSubtext, { color: colors.muted }]}>Tap to view individual transaction ledgers</Text>
               </Card>
             </TouchableOpacity>
 
-            {/* Owed to You Card */}
-            <Card style={[styles.bentoHalf, styles.owedCard]}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardLabel}>Owed to You</Text>
-                <ArrowUpRightIcon size={18} color={Colors.primary} />
-              </View>
-              <Text style={[styles.cardValueSmall, { color: Colors.primary }]}>
-                ₹{globalBalances.owedToYou.toLocaleString()}
-              </Text>
-            </Card>
+            {/* Owed & Owe grid row */}
+            <View style={styles.bentoRow}>
+              <StatCard
+                label="Owed to You"
+                value={`₹${globalBalances.owedToYou.toLocaleString()}`}
+                subtext="Receivables"
+                icon={<ArrowUpRightIcon size={16} color={colors.primary} />}
+                accentColor={colors.primary}
+                style={styles.bentoHalf}
+                delay={100}
+              />
+              <StatCard
+                label="You Owe"
+                value={`₹${globalBalances.youOwe.toLocaleString()}`}
+                subtext="Group Debts"
+                icon={<ArrowDownLeftIcon size={16} color={colors.error} />}
+                accentColor={colors.error}
+                style={styles.bentoHalf}
+                delay={150}
+              />
+            </View>
 
-            {/* You Owe Card */}
-            <Card style={[styles.bentoHalf, styles.oweCard]}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardLabel}>You Owe</Text>
-                <ArrowDownLeftIcon size={18} color={Colors.error} />
-              </View>
-              <Text style={[styles.cardValueSmall, { color: Colors.error }]}>
-                ₹{globalBalances.youOwe.toLocaleString()}
-              </Text>
-            </Card>
-
-            {/* Groups Card */}
-            <Card style={styles.bentoFull}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardLabel}>Active Groups</Text>
-                <UsersIcon size={18} color={Colors.secondary} />
-              </View>
-              <Text style={styles.cardValueMedium}>{groups.length}</Text>
-              <Text style={styles.cardSubtext}>Shared expense hubs</Text>
-            </Card>
+            {/* Groups Bento card */}
+            <TouchableOpacity
+              style={[styles.bentoFull, { marginTop: 12 }]}
+              onPress={() => router.push('/(tabs)/explore')}
+              activeOpacity={0.8}
+            >
+              <Card style={[styles.groupBentoCard, { borderLeftColor: colors.primary }]} delay={200}>
+                <View style={styles.cardHeader}>
+                  <Text style={[styles.cardLabel, { color: colors.muted }]}>Active Groups</Text>
+                  <UsersIcon size={18} color={colors.primary} />
+                </View>
+                <Text style={[styles.cardValueMedium, { color: colors.text }]}>{groups.length}</Text>
+                <Text style={[styles.cardSubtext, { color: colors.muted }]}>Shared multi-party vault pools</Text>
+              </Card>
+            </TouchableOpacity>
           </View>
         )}
 
         {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>Actions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
         <View style={styles.actionsContainer}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push('/personal-expenses/create')}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
-            <View style={styles.actionIconContainer}>
-              <WalletIcon size={24} color={Colors.primary} />
+            <View style={[styles.actionIconContainer, { backgroundColor: colors.primary }]}>
+              <WalletIcon size={20} color={contrastIconColor} />
             </View>
-            <Text style={styles.actionText}>Log Expense</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>Log Personal</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push('/modal')}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
-            <View style={styles.actionIconContainer}>
-              <UsersIcon size={24} color={Colors.secondary} />
+            <View style={[styles.actionIconContainer, { backgroundColor: colors.primary }]}>
+              <UsersIcon size={20} color={contrastIconColor} />
             </View>
-            <Text style={styles.actionText}>New Group</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>New Group</Text>
           </TouchableOpacity>
         </View>
 
         {/* Active Groups List Preview */}
         <View style={styles.groupsHeader}>
-          <Text style={styles.sectionTitle}>My Groups</Text>
-          <TouchableOpacity onPress={() => router.push('/modal')}>
-            <Text style={styles.seeAllText}>See All</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Collaborative Vaults</Text>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/explore')} activeOpacity={0.7}>
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
 
         {groups.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No active groups found</Text>
-            <Text style={styles.emptySubtext}>Create or join a group to start splitting bills</Text>
+          <Card style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.emptyText, { color: colors.text }]}>No active groups found</Text>
+            <Text style={[styles.emptySubtext, { color: colors.muted }]}>Create or join a group to start splitting bills</Text>
           </Card>
         ) : (
-          groups.slice(0, 3).map((group) => (
-            <TouchableOpacity
+          groups.slice(0, 3).map((group, idx) => (
+            <GroupCard
               key={group.id}
-              style={styles.groupItem}
+              name={group.name}
+              description={group.description || 'Shared Expense Group'}
+              tag="ACTIVE"
+              activityText="Updated recently"
               onPress={() => router.push(`/groups/${group.id}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.groupAvatar}>
-                <Text style={styles.groupAvatarText}>{group.name.substring(0, 2).toUpperCase()}</Text>
-              </View>
-              <View style={styles.groupInfo}>
-                <Text style={styles.groupNameText}>{group.name}</Text>
-                <Text style={styles.groupDescriptionText} numberOfLines={1}>
-                  {group.description || 'Shared Expense Group'}
-                </Text>
-              </View>
-              <ArrowUpRightIcon size={16} color={Colors.primary} />
-            </TouchableOpacity>
+              delay={250 + idx * 50}
+            />
           ))
         )}
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -325,35 +342,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  container: {
-    padding: 24,
-    paddingTop: 16,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
-  welcome: {
-    fontSize: 14,
-    color: Colors.muted,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 4,
-  },
-  headerActions: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
+  headerAvatar: {
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+  },
+  welcome: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    color: Colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  userName: {
+    fontSize: 20,
+    fontFamily: 'PlusJakartaSans-Bold',
+    color: '#FFFFFF',
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   logoutButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -363,7 +389,7 @@ const styles = StyleSheet.create({
   bellButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: Colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -386,182 +412,154 @@ const styles = StyleSheet.create({
   dotText: {
     color: '#000000',
     fontSize: 9,
-    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   invitationBanner: {
-    backgroundColor: 'rgba(0, 229, 255, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
     borderWidth: 1,
-    borderColor: Colors.secondary,
-    borderRadius: 8,
+    borderColor: 'rgba(215, 255, 63, 0.15)',
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   invitationText: {
-    color: Colors.secondary,
-    fontSize: 14,
-    fontWeight: '600',
+    color: Colors.primary,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     textAlign: 'center',
   },
+  container: {
+    paddingHorizontal: 24,
+  },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
-    marginBottom: 16,
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginBottom: 14,
+    marginTop: 8,
   },
   bentoGrid: {
+    marginBottom: 20,
+  },
+  bentoRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+    gap: 12,
   },
   bentoFull: {
     width: '100%',
   },
   bentoHalf: {
-    width: '48%',
+    flex: 1,
   },
   mainCard: {
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
+    padding: 18,
+    marginBottom: 0,
   },
-  owedCard: {
+  groupBentoCard: {
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
-  },
-  oweCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.error,
+    padding: 18,
+    marginBottom: 0,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   cardLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   cardValue: {
-    fontSize: 32,
-    fontWeight: '900',
+    fontSize: 34,
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   cardValueMedium: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  cardValueSmall: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   cardSubtext: {
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 28,
+    gap: 12,
+    marginBottom: 24,
   },
   actionButton: {
     flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: 12,
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
   },
   actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surface,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   actionText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   groupsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    marginTop: 8,
   },
   seeAllText: {
     color: Colors.primary,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
+    textTransform: 'uppercase',
   },
   emptyCard: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 32,
+    borderRadius: 20,
   },
   emptyText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   emptySubtext: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     textAlign: 'center',
     marginTop: 4,
-  },
-  groupItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 12,
-    marginBottom: 12,
-  },
-  groupAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  groupAvatarText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  groupInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  groupNameText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  groupDescriptionText: {
-    color: Colors.muted,
-    fontSize: 12,
-    marginTop: 2,
   },
 });

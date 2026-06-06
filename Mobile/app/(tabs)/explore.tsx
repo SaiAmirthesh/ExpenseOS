@@ -6,27 +6,30 @@ import {
   ScrollView, 
   RefreshControl, 
   TouchableOpacity, 
-  SafeAreaView 
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Plus, Users, FolderOpen, ArrowRight } from 'lucide-react-native';
+import { Plus, FolderOpen } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuth } from '../../src/store/authContext';
 import { Colors } from '../../src/theme/theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { groupService } from '../../src/services/groupService';
 import { Card } from '../../src/components/common/Card';
 import { Skeleton } from '../../src/components/common/Skeleton';
+import { GroupCard } from '../../src/components/common/GroupCard';
+import { EmptyState } from '../../src/components/common/EmptyState';
 
 const PlusIcon = Plus as any;
-const UsersIcon = Users as any;
 const FolderOpenIcon = FolderOpen as any;
-const ArrowRightIcon = ArrowRight as any;
 
 export default function GroupsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
 
   const { 
     data: groups = [], 
@@ -44,70 +47,70 @@ export default function GroupsScreen() {
   };
 
   return (
-    <View style={[styles.safeArea, { paddingTop: Math.max(insets.top, 16) }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 16) }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Groups</Text>
+        <View>
+          <Text style={[styles.headerSubtitle, { color: colors.muted }]}>COLLABORATIVE VAULTS</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Groups Hub</Text>
+        </View>
         <TouchableOpacity 
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/modal')}
           activeOpacity={0.7}
         >
-          <PlusIcon size={20} color="#000000" />
+          <PlusIcon size={20} color={colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF'} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
         {/* Banner/Stat block */}
-        <Card style={styles.statCard}>
+        <Card style={[styles.statCard, { borderLeftColor: colors.primary }]} delay={50}>
           <View style={styles.statHeader}>
-            <Text style={styles.statLabel}>Total Active Hubs</Text>
-            <FolderOpenIcon size={18} color={Colors.secondary} />
+            <Text style={[styles.statLabel, { color: colors.muted }]}>Total Active Vaults</Text>
+            <FolderOpenIcon size={18} color={colors.primary} />
           </View>
-          <Text style={styles.statValue}>{groups.length}</Text>
-          <Text style={styles.statSubtext}>Start splitting expenses with group members</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>{groups.length}</Text>
+          <Text style={[styles.statSubtext, { color: colors.muted }]}>Start splitting expenses with group members in shared hubs</Text>
         </Card>
 
         {isLoading ? (
           <View style={styles.listContainer}>
-            <Skeleton height={80} style={styles.skeletonCard} />
-            <Skeleton height={80} style={styles.skeletonCard} />
-            <Skeleton height={80} style={styles.skeletonCard} />
+            <Skeleton height={140} style={styles.skeletonCard} />
+            <Skeleton height={140} style={styles.skeletonCard} />
+            <Skeleton height={140} style={styles.skeletonCard} />
           </View>
         ) : groups.length === 0 ? (
-          <Card style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No groups yet</Text>
-            <Text style={styles.emptySubtext}>Tap the "+" icon at the top to create your first shared group hub.</Text>
-          </Card>
+          <EmptyState
+            title="No groups created yet"
+            description="Create your first shared group hub to divide expenses and settle bills."
+            icon={<FolderOpenIcon size={32} color={colors.muted} />}
+            actionTitle="Create Group"
+            onActionPress={() => router.push('/modal')}
+          />
         ) : (
           <View style={styles.listContainer}>
-            {groups.map((group) => (
-              <TouchableOpacity
+            {groups.map((group, idx) => (
+              <GroupCard
                 key={group.id}
-                style={styles.groupCard}
+                name={group.name}
+                description={group.description || 'No description provided'}
+                tag={group.createdBy === user?.email ? 'OWNER' : 'MEMBER'}
+                membersList={[group.createdBy || 'User']}
+                activityText="Tap to view transactions ledger"
                 onPress={() => router.push(`/groups/${group.id}`)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.groupAvatar}>
-                  <Text style={styles.groupAvatarText}>{group.name.substring(0, 2).toUpperCase()}</Text>
-                </View>
-                <View style={styles.groupInfo}>
-                  <Text style={styles.groupName}>{group.name}</Text>
-                  <Text style={styles.groupDesc} numberOfLines={1}>
-                    {group.description || 'No description provided'}
-                  </Text>
-                </View>
-                <ArrowRightIcon size={16} color={Colors.primary} />
-              </TouchableOpacity>
+                delay={100 + idx * 50}
+              />
             ))}
           </View>
         )}
@@ -126,29 +129,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  headerSubtitle: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-SemiBold',
+    color: Colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    marginTop: 4,
   },
   addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   container: {
-    padding: 24,
-    paddingTop: 8,
+    paddingHorizontal: 24,
   },
   statCard: {
     borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
-    marginBottom: 24,
+    borderLeftColor: Colors.primary,
+    marginBottom: 20,
   },
   statHeader: {
     flexDirection: 'row',
@@ -157,82 +167,30 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: Colors.muted,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: -0.5,
   },
   statSubtext: {
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     color: Colors.muted,
+    lineHeight: 16,
   },
   listContainer: {
     gap: 12,
   },
   skeletonCard: {
-    borderRadius: 12,
+    borderRadius: 20,
     marginBottom: 12,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    marginTop: 20,
-  },
-  emptyText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  emptySubtext: {
-    color: Colors.muted,
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 20,
-  },
-  groupCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-  },
-  groupAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  groupAvatarText: {
-    color: Colors.primary,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  groupInfo: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  groupName: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  groupDesc: {
-    color: Colors.muted,
-    fontSize: 13,
-    marginTop: 4,
   },
 });

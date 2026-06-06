@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator, 
-  SafeAreaView 
+  SafeAreaView,
+  RefreshControl
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,12 +18,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../../src/store/authContext';
 
 import { Colors } from '../../../src/theme/theme';
+import { useTheme } from '../../../src/theme/ThemeContext';
 import { balanceService } from '../../../src/services/balanceService';
 import { settlementService, SettlementStatus } from '../../../src/services/settlementService';
 import { createSettlementSchema, CreateSettlementFields } from '../../../src/features/settlements/schemas/settlementSchemas';
 import { Input } from '../../../src/components/common/Input';
 import { Button } from '../../../src/components/common/Button';
 import { Card } from '../../../src/components/common/Card';
+import { Badge } from '../../../src/components/common/Badge';
 
 const ArrowLeftIcon = ArrowLeft as any;
 const RefreshCwIcon = RefreshCw as any;
@@ -37,10 +40,13 @@ export default function SettlementsScreen() {
   const { user } = useAuth();
   const { id } = useLocalSearchParams();
   const groupId = Number(id);
+  const { colors } = useTheme();
+  const contrastIconColor = colors.primary === '#D7FF3F' ? '#000000' : '#FFFFFF';
 
   const [activeFormSuggestion, setActiveFormSuggestion] = useState<{ toUserId: number; toUserName: string; amount: number } | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Queries
   const { 
@@ -81,7 +87,6 @@ export default function SettlementsScreen() {
       setActiveFormSuggestion(null);
       reset();
       
-      // Invalidate queries to refresh balance data
       queryClient.invalidateQueries({ queryKey: ['groupBalances', groupId] });
       queryClient.invalidateQueries({ queryKey: ['groupSuggestions', groupId] });
       queryClient.invalidateQueries({ queryKey: ['groupSettlements', groupId] });
@@ -159,30 +164,25 @@ export default function SettlementsScreen() {
     });
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetchBalances(),
+      refetchSuggestions(),
+      refetchHistory(),
+    ]);
+    setRefreshing(false);
+  };
+
   const getStatusBadge = (status: SettlementStatus) => {
     switch (status) {
       case 'APPROVED':
-        return (
-          <View style={[styles.badge, styles.badgeApproved]}>
-            <CheckCircle size={10} color={Colors.primary} />
-            <Text style={[styles.badgeText, { color: Colors.primary }]}>Accepted</Text>
-          </View>
-        );
+        return <Badge label="Accepted" variant="success" />;
       case 'REJECTED':
-        return (
-          <View style={[styles.badge, styles.badgeRejected]}>
-            <XCircle size={10} color={Colors.error} />
-            <Text style={[styles.badgeText, { color: Colors.error }]}>Rejected</Text>
-          </View>
-        );
+        return <Badge label="Rejected" variant="danger" />;
       case 'PENDING':
       default:
-        return (
-          <View style={[styles.badge, styles.badgePending]}>
-            <Clock size={10} color={Colors.secondary} />
-            <Text style={[styles.badgeText, { color: Colors.secondary }]}>Pending</Text>
-          </View>
-        );
+        return <Badge label="Pending" variant="warning" />;
     }
   };
 
@@ -192,40 +192,48 @@ export default function SettlementsScreen() {
   const isLoading = loadingBalances || loadingSuggestions || loadingHistory;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 8), borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settlements</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Settlements</Text>
         <TouchableOpacity 
           style={styles.refreshBtn} 
-          onPress={() => {
-            refetchBalances();
-            refetchSuggestions();
-            refetchHistory();
-          }}
+          onPress={onRefresh}
           activeOpacity={0.7}
         >
-          <RefreshCwIcon size={18} color="#FFFFFF" />
+          <RefreshCwIcon size={18} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      {isLoading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+      {isLoading && !refreshing ? (
+        <View style={[styles.loaderContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView 
+          style={[styles.container, { backgroundColor: colors.background }]} 
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+        >
           {successMsg && (
-            <View style={[styles.banner, styles.successBanner]}>
-              <Text style={styles.bannerText}>{successMsg}</Text>
+            <View style={[styles.banner, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '25' }]}>
+              <Text style={[styles.bannerText, { color: colors.primary }]}>{successMsg}</Text>
             </View>
           )}
           {errorMsg && (
-            <View style={[styles.banner, styles.errorBanner]}>
-              <Text style={styles.bannerText}>{errorMsg}</Text>
+            <View style={[styles.banner, { backgroundColor: colors.error + '10', borderColor: colors.error + '25' }]}>
+              <Text style={[styles.bannerText, { color: colors.error }]}>{errorMsg}</Text>
             </View>
           )}
 
@@ -233,9 +241,9 @@ export default function SettlementsScreen() {
           {activeFormSuggestion && (
             <Card style={styles.formCard}>
               <View style={styles.formHeader}>
-                <Text style={styles.formTitle}>Record Payment to {activeFormSuggestion.toUserName}</Text>
+                <Text style={[styles.formTitle, { color: colors.text }]}>Record Payment to {activeFormSuggestion.toUserName}</Text>
                 <TouchableOpacity onPress={() => setActiveFormSuggestion(null)}>
-                  <XCircle size={20} color={Colors.muted} />
+                  <XIcon size={18} color={colors.muted} />
                 </TouchableOpacity>
               </View>
               
@@ -261,7 +269,7 @@ export default function SettlementsScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     label="Payment Reference Note"
-                    placeholder="e.g. UPI txn #123"
+                    placeholder="e.g. Paid via UPI"
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
@@ -279,35 +287,33 @@ export default function SettlementsScreen() {
             </Card>
           )}
 
-
-
           {/* Suggestions */}
-          <Text style={styles.sectionTitle}>Settlement Suggestions</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Vault Suggestions</Text>
           {mySuggestions.length === 0 ? (
             <Card style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Everyone is fully settled!</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>Everyone is fully settled!</Text>
             </Card>
           ) : (
             mySuggestions.map((s, index) => (
-              <Card key={index} style={styles.suggestionCard}>
+              <Card key={index} style={[styles.suggestionCard, { borderLeftColor: colors.primary }]} delay={index * 50}>
                 <View style={styles.suggestionInfo}>
                   <Text style={styles.suggestionText}>
                     {s.fromUserId.toString() === user.id ? (
-                      <Text>You owe <Text style={styles.textBold}>{s.toUserName}</Text></Text>
+                      <Text style={[styles.textOwe, { color: colors.muted }]}>You owe <Text style={[styles.textBold, { color: colors.text }]}>{s.toUserName}</Text></Text>
                     ) : (
-                      <Text><Text style={styles.textBold}>{s.fromUserName}</Text> owes You</Text>
+                      <Text style={[styles.textOwed, { color: colors.primary }]}><Text style={[styles.textBold, { color: colors.text }]}>{s.fromUserName}</Text> owes You</Text>
                     )}
                   </Text>
-                  <Text style={styles.suggestionAmount}>₹{s.amount.toLocaleString()}</Text>
+                  <Text style={[styles.suggestionAmount, { color: colors.text }]}>₹{s.amount.toLocaleString()}</Text>
                 </View>
                 {s.fromUserId.toString() === user.id && (
                   <TouchableOpacity 
-                    style={styles.settleBtn}
+                    style={[styles.settleBtn, { backgroundColor: colors.primary }]}
                     onPress={() => triggerSettleForm(s.toUserId, s.toUserName, s.amount)}
-                    activeOpacity={0.7}
+                    activeOpacity={0.75}
                   >
-                    <SendIcon size={14} color="#000000" />
-                    <Text style={styles.settleBtnText}>Settle</Text>
+                    <SendIcon size={14} color={contrastIconColor} />
+                    <Text style={[styles.settleBtnText, { color: contrastIconColor }]}>Settle</Text>
                   </TouchableOpacity>
                 )}
               </Card>
@@ -317,35 +323,35 @@ export default function SettlementsScreen() {
           {/* Pending Approvals */}
           {myPendingApprovals.length > 0 && (
             <View>
-              <Text style={styles.sectionTitle}>Pending Approvals</Text>
-              {myPendingApprovals.map((h) => (
-                <Card key={h.id} style={styles.approvalCard}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Pending Approvals</Text>
+              {myPendingApprovals.map((h, index) => (
+                <Card key={h.id} style={[styles.approvalCard, { borderLeftColor: colors.primary }]} delay={index * 50}>
                   <View style={styles.historyInfo}>
-                    <Text style={styles.historyDesc}>
+                    <Text style={[styles.historyDesc, { color: colors.text }]}>
                       {h.fromUserName} Paid You
                     </Text>
-                    <Text style={styles.historyNote}>
+                    <Text style={[styles.historyNote, { color: colors.muted }]}>
                       {h.note || 'No transaction note'}
                     </Text>
                   </View>
                   <View style={styles.approvalActions}>
-                    <Text style={styles.approvalAmt}>₹{h.amount.toLocaleString()}</Text>
+                    <Text style={[styles.approvalAmt, { color: colors.text }]}>₹{h.amount.toLocaleString()}</Text>
                     <View style={styles.actionRow}>
                       <TouchableOpacity 
-                        style={[styles.circleBtn, styles.rejectBtn]}
+                        style={[styles.circleBtn, styles.rejectBtn, { borderColor: colors.border }]}
                         onPress={() => rejectSettlementMutation.mutate(h.id)}
                         disabled={rejectSettlementMutation.isPending || approveSettlementMutation.isPending}
                         activeOpacity={0.7}
                       >
-                        <XIcon size={12} color={Colors.error} />
+                        <XIcon size={12} color={colors.error} />
                       </TouchableOpacity>
                       <TouchableOpacity 
-                        style={[styles.circleBtn, styles.acceptBtn]}
+                        style={[styles.circleBtn, styles.acceptBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                         onPress={() => approveSettlementMutation.mutate(h.id)}
                         disabled={rejectSettlementMutation.isPending || approveSettlementMutation.isPending}
                         activeOpacity={0.7}
                       >
-                        <CheckIcon size={12} color="#000000" />
+                        <CheckIcon size={12} color={contrastIconColor} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -355,24 +361,24 @@ export default function SettlementsScreen() {
           )}
 
           {/* History */}
-          <Text style={styles.sectionTitle}>Settlement History</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Settlement History</Text>
           {history.length === 0 ? (
             <Card style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No settlements recorded yet</Text>
+              <Text style={[styles.emptyText, { color: colors.muted }]}>No settlements recorded yet</Text>
             </Card>
           ) : (
-            history.map((h) => (
-              <Card key={h.id} style={styles.historyCard}>
+            history.map((h, index) => (
+              <Card key={h.id} style={styles.historyCard} delay={index * 40}>
                 <View style={styles.historyInfo}>
-                  <Text style={styles.historyDesc}>
+                  <Text style={[styles.historyDesc, { color: colors.text }]}>
                     {h.fromUserName} Paid {h.toUserName}
                   </Text>
-                  <Text style={styles.historyNote}>
+                  <Text style={[styles.historyNote, { color: colors.muted }]}>
                     {h.note || 'No transaction note'}
                   </Text>
                 </View>
                 <View style={styles.historyValues}>
-                  <Text style={styles.historyAmt}>₹{h.amount.toLocaleString()}</Text>
+                  <Text style={[styles.historyAmt, { color: colors.primary }]}>₹{h.amount.toLocaleString()}</Text>
                   {getStatusBadge(h.status)}
                 </View>
               </Card>
@@ -407,8 +413,8 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   loaderContainer: {
@@ -424,40 +430,44 @@ const styles = StyleSheet.create({
   },
   banner: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 20,
   },
   successBanner: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    borderColor: Colors.success,
+    backgroundColor: 'rgba(215, 255, 63, 0.08)',
+    borderColor: 'rgba(215, 255, 63, 0.15)',
   },
   errorBanner: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    borderColor: Colors.error,
+    backgroundColor: 'rgba(255, 107, 107, 0.08)',
+    borderColor: 'rgba(255, 107, 107, 0.15)',
   },
   bannerText: {
     textAlign: 'center',
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
     color: '#FFFFFF',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 12,
     marginTop: 16,
   },
-
   emptyCard: {
-    paddingVertical: 24,
+    paddingVertical: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 20,
     marginBottom: 16,
   },
   emptyText: {
     color: Colors.muted,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
   },
   suggestionCard: {
     flexDirection: 'row',
@@ -466,7 +476,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
+    borderLeftColor: Colors.primary,
   },
   suggestionInfo: {
     flex: 1,
@@ -474,16 +484,23 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     color: Colors.muted,
-    fontSize: 14,
+    fontSize: 13,
+    fontFamily: 'Inter-Regular',
+  },
+  textOwe: {
+    color: Colors.muted,
+  },
+  textOwed: {
+    color: Colors.primary,
   },
   textBold: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   suggestionAmount: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900',
+    fontSize: 20,
+    fontFamily: 'PlusJakartaSans-ExtraBold',
     marginTop: 4,
   },
   settleBtn: {
@@ -492,16 +509,17 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: Colors.primary,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   settleBtnText: {
     fontSize: 12,
     color: '#000000',
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   formCard: {
     marginBottom: 24,
+    padding: 18,
   },
   formHeader: {
     flexDirection: 'row',
@@ -510,8 +528,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   formTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#FFFFFF',
   },
   formBtn: {
@@ -531,11 +549,12 @@ const styles = StyleSheet.create({
   historyDesc: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   historyNote: {
     color: Colors.muted,
     fontSize: 12,
+    fontFamily: 'Inter-Regular',
     marginTop: 4,
   },
   historyValues: {
@@ -545,33 +564,7 @@ const styles = StyleSheet.create({
   historyAmt: {
     color: Colors.primary,
     fontSize: 15,
-    fontWeight: 'bold',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  badgeApproved: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
-    borderColor: Colors.success,
-  },
-  badgePending: {
-    backgroundColor: 'rgba(0, 229, 255, 0.1)',
-    borderColor: Colors.secondary,
-  },
-  badgeRejected: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    borderColor: Colors.error,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    textTransform: 'uppercase',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   approvalCard: {
     flexDirection: 'row',
@@ -581,10 +574,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
-    backgroundColor: Colors.card,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   approvalActions: {
     alignItems: 'flex-end',
@@ -593,7 +582,7 @@ const styles = StyleSheet.create({
   approvalAmt: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   actionRow: {
     flexDirection: 'row',
@@ -602,7 +591,7 @@ const styles = StyleSheet.create({
   circleBtn: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
