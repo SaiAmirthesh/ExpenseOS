@@ -1,4 +1,4 @@
-# ExpenseOS - Premium Fintech Expense Manager
+# ExpenseOS - Fintech Expense Manager
 
 ExpenseOS is a premium, modern collaborative financial vault and personal spending ledger system. Designed with a dark banking aesthetic, it provides users with a comprehensive suite of tools to log personal expenses, split collaborative bills within groups, settle balances securely, and view graphic analytics.
 
@@ -6,7 +6,7 @@ The platform is split into a robust **Spring Boot (Java 25) REST API Backend** a
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 graph TD
@@ -39,7 +39,7 @@ graph TD
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### 1. Spring Boot API Backend (`/Backend`)
 *   **Language & Runtime**: Java 25 (utilizing modern virtual threads & record DTO structures)
@@ -60,35 +60,35 @@ graph TD
 
 ---
 
-## 🌟 Key Functional Features
+##  Key Functional Features
 
-### 🔒 Authentic Security & Access
+### Authentic Security & Access
 *   **Secure API Requests**: Standard Authorization interceptor injecting JWT bearer credentials automatically.
 *   **Live Settings**: Real-time password updates using the PUT `/api/v1/auth/change-password` endpoint directly from the settings panel.
 
-### 💰 Personal Spending Ledger
+### Personal Spending Ledger
 *   **Categorized Logs**: Track expenditures across segments (Food, Transport, Bills, Shopping, Travel, etc.).
 *   **Filtered Views**: Filter transactions on-the-fly using horizontal pill filters.
 *   **Dynamic Visual Stats**: Outflow thresholds with progress gauges displaying budget ceilings.
 
-### 👥 Collaborative Vaults & Split Bills
+### Collaborative Vaults & Split Bills
 *   **Split Schemas**: Supports three split schemas calculated automatically:
     1.  **Equal**: Split the amount evenly among all members.
     2.  **Exact**: Assign custom rupee splits (validates that splits sum to total amount).
     3.  **Percentage**: Assign percentage splits (validates that percentages sum to 100%).
 *   **Interactive Ledger**: Add bill records and invite users securely via email inside Group active spaces.
 
-### 💳 Settlements Engine
+### Settlements Engine
 *   **Settle Up Suggestions**: Auto-resolves group debt ledgers to suggest the minimal number of peer-to-peer payments required.
 *   **Approval Protocol**: Settlement requests require confirmation from the receiving member before balance states change.
 
-### 📈 SVG Velocity Analytics
+### SVG Velocity Analytics
 *   **Velocity Charts**: An elegant custom SVG line chart displaying daily spending velocity over the last 7 days.
 *   **Allocation Donuts**: Color-coded SVG donut charts showing category weight distribution and legends.
 
 ---
 
-## ⚙️ Project Setup & Execution
+## Project Setup & Execution
 
 ### Prerequisites
 *   **Java JDK 25**
@@ -139,7 +139,7 @@ graph TD
 
 ---
 
-## 🎨 Dynamic Color Themes
+## Dynamic Color Themes
 
 ExpenseOS features a dynamic interface customizable under the **Profile** tab with three backgrounds that automatically override page backdrops, safe-area headers, and card containers:
 
